@@ -1,0 +1,40 @@
+{"review": "The listing lived up to the name! we enjoyed the privacy of our own space, was clean, inviting, and Elsa provided many amenities for our stay. she responded quickly to any questions, and location was in a quiet residential neighborhood. would highly recommend!", "tags": ["干净舒适", "设施齐全", "房东热情", "位置安静"]}
+
+{"review": "My wife and I were able to relax, work, and enjoy Albany. The park across the street was a great treat for family outings with our Dog! The host's were extremely flexible when we needed to adjust out reservation. Location was perfect!!", "tags": ["放松舒适", "位置便利", "房东灵活", "宠物友好"]}
+
+{"review": "The house was nice and clean. Parking is easy. The place is close to restaurants. Kitchen had everything You need to cook. I wish there was a regular coffee machine instead of Chemex pour-over. Will stay again!", "tags": ["干净舒适", "停车方便", "位置便利", "厨房齐全", "咖啡机需求"]}
+
+{"review": "Great place and location!  Nice and cool in the heat as well", "tags": ["位置便利", "环境舒适", "温度适宜"]}
+
+{"review": "I had a very nice stay at Elizabeth's place.  Refrigerator, microwave, wireless internet, parking, and private bathroom are included.  Nice neighborhood, and check-in and check-out were easy.  Would stay again!", "tags": ["设施齐全", "位置便利", "房东热情", "入住方便"]}
+
+{"review": "Phenomenal stay. Diana was responsive and really worked with me on check in and check out time. Very convenient to all things you need around Albany. Highly recommend.", "tags": ["房东热情", "位置便利", "沟通顺畅", "强烈推荐"]}
+
+{"review": "This unit was so clean and so charming. The location was perfect. On a quiet street directly across from a magnificent park. I would highly recommend staying here. And Lloyd was a terrific communicator and host!", "tags": ["干净舒适", "位置便利", "房东热情", "环境优美"]}
+
+{"review": "Absolutely fabulous does not begin to describe staying with Adam. He was so flexible about my arrival and had dinner set and waiting for me on my arrival despite it being later in the evening. His warm and courtly hospitality are from another era. <br/><br/>My room was quite comfortable with a twin bed. It is an older building but everything was very clean. <br/><br/>Despite leaving at an early hour, Adam also made me breakfast which was stunningly delicious and he packed me a lunch to take with me as well. <br/><br/>I wouldn't stay anywhere else besides at Adams in coming to Albany.", "tags": ["房东热情", "房间舒适", "餐饮美味", "服务周到"]}
+
+{"review": "Love it", "tags": ["满意度高"]}
+
+{"review": "It was a great place to stay.  I enjoyed my stay there.", "tags": ["环境优美", "住得舒服", "位置好"]}
+
+{"review": "Great place! Everything was very well described. I will not hesitate to stay again", "tags": ["位置优越", "描述准确", "愿意再住"]}
+
+{"review": "Arrived on Thanksgiving day, so just checked in and left. Came home exhausted from family and traveling and saw, unlike the pictures posted, that the bed only had two small flat pillows, one regular one and one in a decorative sham. For two adults. <br/>It was late, so we just had a bad nights sleep and would talk about it tomorrow. <br/>I message them to let them know, very responsive and said they’d come in an hour, and they did. With sealed throw pillow inserts. Not real pillows. But at this point, we’ve already spoken up, what can we do? We open them up to put the pillow cases on and they REEK like smoke. It was so bad we couldn’t use them. Ended up borrowing pillows from my family just so we could get some real sleep.", "tags": ["入住体验", "枕头问题", "烟味", "房东响应"]}
+
+{"review": "What a lovely little apartment! It was a pleasure to stay there.", "tags": ["环境优美", "居住愉快"]}
+
+{"review": "This apartment is a basement apartment.  The bed is very comfortable, which is crucial when traveling. The kitchen is well equipped and bathroom small but good, the shower works great. The Daily Grind is nearby for a cup of delicious coffee and bagels!", "tags": ["地下室", "舒适床铺", "设施齐全", "位置便利"]}
+
+{"review": "I stayed here with my two teenagers.  It was a nice treat to spread out and each have our own bedroom as well as comfortable clean dining room to share our takeout together.  Much better than being squished in one or two hotel rooms.  Diana was responsive and helpful with restaurant recommendations and checkout procedures.  A smooth stay.", "tags": ["空间宽敞", "干净舒适", "设施齐全", "房东热情"]}
+
+{"review": "Perfect location for museums, parks, theater and restaurants.", "tags": ["位置便利", "文化景点", "餐饮丰富", "绿地公园"]}
+
+{"review": "Great place in great area with plenty of perks! Can’t wait to stay again!", "tags": ["位置优越", "设施丰富", "期待再住"]}
+
+{"review": "The house was just right for our needs.  It was completely clean and well maintained.  Good location for colleges in the Capital District.  Will definitely return if we need to stay in the area.", "tags": ["合适、干净整洁、位置便利、愿意再住"]}
+
+{"review": "Lots of space and good value. This is nice-sized one-bedroom with room to spread out. It was a good deal, too, and a convenient location. I was in town for business and this was a good spot to come back to and relax. There was a supermarket and other shops/restaurants within walking distance, which was nice. It's an older house and apartment, but everything was very clean and well maintained. I'd stay here again.", "tags": ["空间宽敞", "性价比高", "位置便利", "周边设施齐全", "干净整洁"]}
+
+{"review": "Super clean and cute little place! You have your own private entrance and the place is in the most amazing location. Janet and her husband were extremely accommodating and i will hopefully be back soon!", "tags": ["干净可爱", "私人入口", "位置极佳", "房东友好"]}
+

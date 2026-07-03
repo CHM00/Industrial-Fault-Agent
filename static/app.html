@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工业故障诊断助手</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root{
+      --bg:#f7f5f1;--side:#ece9e3;--main:#fff;--line:#dedad2;--active:#ded8d0;
+      --text:#303030;--muted:#746f68;--ink:#111;--brand:#10a37f;--danger:#d92d20;
+      --left:304px;--right:330px;
+      font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;
+    }
+    *{box-sizing:border-box} html,body{height:100%;margin:0} body{overflow:hidden;color:var(--text);background:var(--bg)}
+    button,input,textarea{font:inherit} button{cursor:pointer}
+    .app{height:100dvh;min-height:0;overflow:hidden;display:grid;grid-template-columns:var(--left) minmax(0,1fr) var(--right)}
+    .side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+    .search{padding:8px}.search input{width:100%;height:44px;border:1px solid var(--line);border-radius:13px;background:#f4f2ee;padding:0 14px;outline:none}
+    .nav{padding:12px 8px;border-bottom:1px solid rgba(0,0,0,.05)}.nav button{width:100%;height:42px;border:0;background:transparent;border-radius:10px;text-align:left;padding:0 12px;font-size:15px}.nav button:hover{background:#fff}
+    .section-title{padding:18px 14px 8px;color:var(--muted);font-size:13px;font-weight:700}.history{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 8px 12px;overscroll-behavior:contain}
+    .item{width:100%;border:0;background:transparent;border-radius:10px;text-align:left;padding:10px 12px;margin:2px 0;color:var(--text);font-size:14px;line-height:1.35}.item:hover,.item.active{background:var(--active)}
+    .item-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.item-time{font-size:12px;color:var(--muted);margin-top:4px}
+    .main{background:var(--main);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.chat{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:24px;overscroll-behavior:contain}
+    .welcome{max-width:820px;margin:11vh auto 0;padding:0 28px;text-align:center}.logo{width:48px;height:48px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;margin:0 auto 20px;font-weight:800}
+    h1{font-size:32px;margin:0 0 12px;color:var(--ink)}.welcome p{font-size:16px;line-height:1.7;color:var(--muted);margin:0 auto 24px;max-width:680px}
+    .quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.quick button{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:left}.quick button:hover{background:#f7f5f1}.quick b{display:block;margin-bottom:6px}.quick span{color:var(--muted);font-size:13px}
+    .msg{display:grid;grid-template-columns:42px minmax(0,820px);gap:14px;justify-content:center;padding:26px 28px;border-bottom:1px solid rgba(0,0,0,.06)}.msg.assistant{background:#faf9f7}
+    .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#e7e2da;font-size:13px;font-weight:700}.msg.user .avatar{background:var(--brand);color:#fff}.body{font-size:16px;line-height:1.8;min-width:0}.body p{margin:0 0 12px}.body pre{white-space:pre-wrap;word-break:break-word;background:#f2f0ec;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto}
+    .diagram{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px;overflow:auto}.diagram .mermaid{text-align:center}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn{height:36px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:0 13px;color:var(--text);font-size:14px;text-decoration:none;display:inline-flex;align-items:center}.btn:hover{background:#f7f5f1}.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .composer{flex:0 0 auto;background:#fff;border-top:1px solid rgba(0,0,0,.06);padding:14px 28px 18px}.box{max-width:940px;margin:0 auto;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 16px 48px rgba(0,0,0,.08);padding:10px}
+    .box textarea{width:100%;height:58px;max-height:180px;border:0;outline:0;resize:none;padding:10px 12px;font-size:16px;line-height:1.5}.foot{display:flex;align-items:center;justify-content:space-between;padding:4px}
+    .mode{display:flex;gap:4px;border:1px solid var(--line);background:#f4f2ee;border-radius:999px;padding:3px}.mode button{height:30px;min-width:76px;border:0;border-radius:999px;background:transparent;color:var(--muted)}.mode button.active{background:#fff;color:var(--ink)}
+    .send{width:36px;height:36px;border:0;border-radius:50%;background:#ddd8d0;color:#fff;font-size:18px}.send.ready{background:var(--brand)}
+    .feedback{max-width:940px;margin:0 auto 12px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 18px 44px rgba(0,0,0,.08);padding:14px}.hidden{display:none!important}.feedback-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:8px}.question{line-height:1.65;margin-bottom:10px}.feedback textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;padding:10px;outline:none;resize:vertical}.feedback-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+    .log{background:#f4f2ee;border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.log-head{height:56px;flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px}.log-head button{border:0;background:transparent;color:var(--muted)}
+    .logs{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:12px;overscroll-behavior:contain}.empty{color:var(--muted);font-size:13px;line-height:1.6;padding:14px}.log-item{display:grid;grid-template-columns:8px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.07)}.dot{width:8px;height:8px;border-radius:50%;background:#b8b3aa;margin-top:7px}.log-label{font-size:12px;font-weight:700;color:var(--ink)}.log-msg{font-size:12px;color:var(--muted);line-height:1.55;margin-top:3px;word-break:break-word}.log-item.error .dot,.log-item.audit .dot{background:var(--danger)}.log-item.filter .dot{background:#15803d}.log-item.generate .dot{background:#d97706}.log-item.ask_expert .dot,.log-item.evaluate_questions .dot{background:var(--brand)}
+    @media(max-width:1180px){.app{grid-template-columns:var(--left) minmax(0,1fr)}.log{display:none}} @media(max-width:820px){.app{grid-template-columns:1fr}.side{display:none}.quick{grid-template-columns:1fr}.msg{grid-template-columns:34px minmax(0,1fr);padding:20px 14px}.composer{padding:12px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="search"><input id="searchInput" placeholder="搜索历史诊断"></div>
+    <div class="nav"><button id="newBtn" type="button">＋ 新诊断</button><button type="button">◎ 工业故障诊断</button><button type="button">☆ 全部记录</button></div>
+    <div class="section-title">历史对话</div>
+    <div class="history" id="history"><div class="empty">正在加载历史...</div></div>
+  </aside>
+  <main class="main">
+    <section class="chat" id="chat">
+      <div class="welcome" id="welcome">
+        <div class="logo">FA</div>
+        <h1>工业故障诊断助手</h1>
+        <p>左侧加载历史诊断，中间展示完整执行过程与结果。输入故障现象后，Agent 会检索知识、生成流程图、审计并收集专家反馈。</p>
+        <div class="quick">
+          <button data-prompt="ABB ACS880 变频器报警 F4 过电流，电机无法启动，负载检查正常。" type="button"><b>变频器过流</b><span>报警码、启动失败、负载正常</span></button>
+          <button data-prompt="西门子 S7-1200 PLC 与上位机通讯中断，交换机指示灯正常，现场偶发掉线。" type="button"><b>PLC 通讯中断</b><span>网络正常但偶发掉线</span></button>
+          <button data-prompt="离心泵运行 20 分钟后轴承温度持续升高，并伴随轻微振动。" type="button"><b>泵轴承温升</b><span>温度、振动、运行时长</span></button>
+          <button data-prompt="空压机异常停机，控制面板无明确报警，重启后短时间内再次停机。" type="button"><b>空压机停机</b><span>无报警、重启复现</span></button>
+        </div>
+      </div>
+    </section>
+    <div class="composer">
+      <div class="feedback hidden" id="feedbackBox">
+        <div class="feedback-meta"><span id="questionIndex">专家反馈</span><span id="questionTotal">等待输入</span></div>
+        <div class="question" id="questionText"></div>
+        <textarea id="feedbackInput" placeholder="输入专家反馈，按 Enter 提交，Shift + Enter 换行"></textarea>
+        <div class="feedback-actions"><button class="btn" id="skipBtn" type="button">跳过</button><button class="btn primary" id="submitBtn" type="button">提交反馈</button></div>
+      </div>
+      <div class="box">
+        <textarea id="faultInput" placeholder="有问题，尽管问，Shift + Enter 换行"></textarea>
+        <div class="foot"><div class="mode"><button class="active" data-mode="manual" type="button">协同</button><button data-mode="auto" type="button">自动</button></div><button class="send" id="sendBtn" type="button">↑</button></div>
+      </div>
+    </div>
+  </main>
+  <aside class="log"><div class="log-head"><strong>运行日志</strong><button id="clearBtn" type="button">清空</button></div><div class="logs" id="logs"><div class="empty">节点进度会实时显示在这里。</div></div></aside>
+</div>
+<script>
+if (window.mermaid) {
+  mermaid.initialize({startOnLoad:false, theme:"base", securityLevel:"loose"});
+}
+const $ = id => document.getElementById(id);
+const state = {mode:"manual", sessionId:null, running:false, lastDiagram:""};
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function addMsg(role, html){ $("welcome")?.remove(); const el=document.createElement("article"); el.className="msg "+role; el.innerHTML=`<div class="avatar">${role==="user"?"你":"AI"}</div><div class="body">${html}</div>`; $("chat").appendChild(el); $("chat").scrollTop=$("chat").scrollHeight; return el.querySelector(".body"); }
+function addText(role, text){ return addMsg(role, `<p>${esc(text).replace(/\n/g,"<br>")}</p>`); }
+function clearLogs(){ $("logs").innerHTML='<div class="empty">节点进度会实时显示在这里。</div>'; }
+function log(node,label,msg){ const list=$("logs"); list.querySelector(".empty")?.remove(); const el=document.createElement("div"); el.className="log-item "+esc(node||""); el.innerHTML=`<div class="dot"></div><div><div class="log-label">${esc(label||node||"event")}</div><div class="log-msg">${esc(msg||"")}</div></div>`; list.appendChild(el); list.scrollTop=list.scrollHeight; }
+function setRunning(v){ state.running=v; $("sendBtn").disabled=v; $("faultInput").disabled=v; }
+async function streamSSE(url, body, handlers){
+  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(await r.text());
+  const rd=r.body.getReader(), dec=new TextDecoder(); let buf="";
+  while(true){ const ch=await rd.read(); if(ch.done) break; buf+=dec.decode(ch.value,{stream:true}); let i;
+    while((i=buf.indexOf("\n\n"))>=0){ const frame=buf.slice(0,i); buf=buf.slice(i+2); let ev="message", data="";
+      for(const line of frame.split("\n")){ if(line.startsWith("event: ")) ev=line.slice(7); if(line.startsWith("data: ")) data+=line.slice(6); }
+      let obj={}; try{obj=JSON.parse(data)}catch{obj={message:data}} handlers[ev]?.(obj);
+    }
+  }
+}
+async function start(){
+  const fault=$("faultInput").value.trim(); if(!fault || state.running) return;
+  $("feedbackBox").classList.add("hidden"); clearLogs(); addText("user", fault);
+  const progress=addMsg("assistant","<p>已收到故障描述，正在启动诊断工作流...</p>");
+  setRunning(true); $("sendBtn").classList.remove("ready"); log("dispatch","[dispatch]","启动诊断会话");
+  try{
+    await streamSSE("/api/start",{fault_input:fault,auto_mode:state.mode==="auto"},{
+      progress:o=>{log(o.node,o.label,o.message); progress.innerHTML=`<p>${esc(o.message||"工作流运行中...")}</p>`},
+      question:o=>{state.sessionId=o.session_id; showQuestion(o); progress.innerHTML="<p>审计发现需要专家确认的问题，请在下方输入反馈。</p>"},
+      done:o=>{renderResult(o); loadHistory()},
+      error:o=>{log("error","[error]",o.message); progress.innerHTML=`<p style="color:var(--danger)">诊断失败：${esc(o.message)}</p>`}
+    });
+  }catch(e){ log("error","[error]",e.message); progress.innerHTML=`<p style="color:var(--danger)">请求失败：${esc(e.message)}</p>`; }
+  finally{ setRunning(false); }
+}
+function showQuestion(o){ $("feedbackBox").classList.remove("hidden"); $("questionIndex").textContent=`问题 ${Number(o.question_index||0)+1}`; $("questionTotal").textContent=`共 ${o.total||0} 个`; $("questionText").textContent=o.question||"请提供专家反馈"; $("feedbackInput").value=""; $("feedbackInput").focus(); }
+async function submitFeedback(skip){
+  if(!state.sessionId) return; const fb=skip?"":$("feedbackInput").value.trim();
+  $("feedbackBox").classList.add("hidden"); addText("user", fb || "跳过该问题");
+  const progress=addMsg("assistant","<p>已提交反馈，正在继续修订流程图...</p>"); setRunning(true); log("ask_expert","[feedback]",fb||"跳过该问题");
+  try{
+    await streamSSE("/api/resume",{session_id:state.sessionId,feedback:fb},{
+      progress:o=>{log(o.node,o.label,o.message); progress.innerHTML=`<p>${esc(o.message||"工作流继续运行中...")}</p>`},
+      question:o=>{state.sessionId=o.session_id; showQuestion(o); progress.innerHTML="<p>还有新的审计问题需要专家反馈。</p>"},
+      done:o=>{renderResult(o); loadHistory()},
+      error:o=>{log("error","[error]",o.message); progress.innerHTML=`<p style="color:var(--danger)">恢复诊断失败：${esc(o.message)}</p>`}
+    });
+  }catch(e){ log("error","[error]",e.message); progress.innerHTML=`<p style="color:var(--danger)">请求失败：${esc(e.message)}</p>`; }
+  finally{ setRunning(false); }
+}
+async function renderResult(o){
+  state.lastDiagram=o.mermaid_diagram||"";
+  const diagramHref=o.paths?.diagram?`/api/diagram/${encodeURIComponent(o.paths.diagram.split(/[\\/]/).pop())}`:"";
+  const reportHref=o.paths?.report?`/api/report/${encodeURIComponent(o.paths.report.split(/[\\/]/).pop())}`:"";
+  const body=addMsg("assistant",`<p><strong>诊断完成。</strong>${esc(o.has_gaps?"已输出当前版本":"审计通过")}，修订次数：${esc(o.revision_count??0)}。</p><div class="diagram"><div class="mermaid">${esc(state.lastDiagram)}</div></div><div class="actions"><button class="btn" data-copy>复制 Mermaid</button>${diagramHref?`<a class="btn" href="${diagramHref}" download>下载流程图</a>`:""}${reportHref?`<a class="btn" href="${reportHref}" download>下载报告</a>`:""}</div>`);
+  try{
+    if (!window.mermaid) throw new Error("Mermaid 未加载，显示源码");
+    await mermaid.run({nodes:[body.querySelector(".mermaid")]});
+  }catch(e){ body.querySelector(".diagram").innerHTML=`<pre>${esc(state.lastDiagram||e.message)}</pre>`; }
+  body.querySelector("[data-copy]")?.addEventListener("click",async ev=>{await navigator.clipboard.writeText(state.lastDiagram); ev.target.textContent="已复制"; setTimeout(()=>ev.target.textContent="复制 Mermaid",1200);});
+}
+async function loadHistory(){
+  const list=$("history"); list.innerHTML='<div class="empty">正在加载历史...</div>';
+  try{
+    const r=await fetch("/api/history"), d=await r.json(), items=[];
+    (d.memory||[]).forEach(x=>items.push({type:"memory",title:x.fault||"历史诊断",time:x.timestamp||"",file:x.file}));
+    (d.diagrams||[]).forEach(x=>items.push({type:"diagram",title:(x.file||"流程图").replace(/_diagram\.mmd$|\.mmd$/,""),time:x.mtime||"",file:x.file}));
+    items.sort((a,b)=>String(b.time).localeCompare(String(a.time)));
+    if(!items.length){list.innerHTML='<div class="empty">暂无历史诊断。</div>'; return;}
+    list.innerHTML="";
+    items.forEach(it=>{ const b=document.createElement("button"); b.className="item"; b.type="button"; b.innerHTML=`<div class="item-title">${esc(it.title)}</div><div class="item-time">${esc(it.time)}</div>`; b.onclick=()=> it.type==="memory" ? loadMemory(it.file,b) : loadDiagram(it.file,b); list.appendChild(b); });
+  }catch(e){ list.innerHTML=`<div class="empty">历史加载失败：${esc(e.message)}</div>`; }
+}
+function activate(btn){ document.querySelectorAll(".item").forEach(x=>x.classList.remove("active")); btn?.classList.add("active"); }
+async function loadDiagram(file,btn){ activate(btn); const r=await fetch(`/api/diagram/${encodeURIComponent(file)}`), d=await r.json(); state.lastDiagram=d.content||""; const body=addMsg("assistant",`<p><strong>已加载历史流程图：</strong>${esc(file)}</p><div class="diagram"><div class="mermaid">${esc(state.lastDiagram)}</div></div>`); try{if(!window.mermaid) throw new Error("Mermaid 未加载，显示源码"); await mermaid.run({nodes:[body.querySelector(".mermaid")]})}catch(e){body.querySelector(".diagram").innerHTML=`<pre>${esc(state.lastDiagram||e.message)}</pre>`} }
+async function loadMemory(file,btn){
+  activate(btn); const r=await fetch(`/api/memory/${encodeURIComponent(file)}`), d=await r.json(), m=d.content||{};
+  addMsg("assistant",`<p><strong>已加载历史诊断：</strong>${esc(m.fault_description||file)}</p>
+    <p><strong>诊断时间：</strong>${esc(m.timestamp||"")}</p>
+    <p><strong>审计状态：</strong>${m.audit_passed?"通过":"未通过或已修订"}　<strong>修订次数：</strong>${esc(m.revision_count??0)}</p>
+    <p><strong>知识融合摘要：</strong></p><pre>${esc(m.filtered_context_summary||"无")}</pre>
+    <p><strong>流程图摘要：</strong></p><pre>${esc(m.diagram_summary||"无")}</pre>`);
+}
+document.querySelectorAll(".mode button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".mode button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); state.mode=b.dataset.mode;});
+document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("faultInput").value=b.dataset.prompt; $("sendBtn").classList.add("ready"); $("faultInput").focus();});
+$("faultInput").oninput=()=>$("sendBtn").classList.toggle("ready",!!$("faultInput").value.trim());
+$("faultInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();start();}};
+$("feedbackInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submitFeedback(false);}};
+$("sendBtn").onclick=start; $("clearBtn").onclick=clearLogs; $("submitBtn").onclick=()=>submitFeedback(false); $("skipBtn").onclick=()=>submitFeedback(true); $("newBtn").onclick=()=>location.reload();
+$("searchInput").oninput=()=>{const q=$("searchInput").value.trim().toLowerCase(); document.querySelectorAll(".item").forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?"":"none");};
+loadHistory();
+</script>
+</body>
+</html>

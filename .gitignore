@@ -1,0 +1,43 @@
+# Secrets and local environment
+.env
+*.env
+env.env
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Editor settings
+.vscode/
+.idea/
+
+# Generated output and temporary files
+output/
+*.tmp
+temp_*.txt
+
+# Office/PDF documents
+*.doc
+*.docx
+*.pdf
+*.ppt
+*.pptx
+*.xls
+*.xlsx
+
+# Archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+
+# OS metadata
+.DS_Store
+Thumbs.db
