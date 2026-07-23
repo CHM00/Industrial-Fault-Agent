@@ -14,6 +14,35 @@ def _ensure_dirs():
     os.makedirs(DIAGRAM_DIR, exist_ok=True)
 
 
+def _compact_external_result(result: dict) -> dict:
+    """Keep research provenance while avoiding full-page content in memory files."""
+    compact = dict(result or {})
+    compact["sources"] = [
+        {
+            **source,
+            "content": (source.get("content") or "")[:1000],
+            "snippet": (source.get("snippet") or "")[:1000],
+        }
+        for source in compact.get("sources", [])
+    ]
+    compact["task_results"] = [
+        {
+            **task,
+            "summary": (task.get("summary") or "")[:2000],
+            "sources": [
+                {
+                    **source,
+                    "content": (source.get("content") or "")[:500],
+                    "snippet": (source.get("snippet") or "")[:500],
+                }
+                for source in task.get("sources", [])
+            ],
+        }
+        for task in compact.get("task_results", [])
+    ]
+    return compact
+
+
 def sequential_think(problem: str, max_steps: int = 6) -> str:
     """结构化推理工具：逐步分析问题，返回推理过程文本。
 
@@ -73,21 +102,69 @@ def save_diagram_and_report(fault_input: str, state: dict) -> tuple:
     revision_count = state.get("revision_count", 0)
     questions = state.get("audit_questions", [])
     feedbacks = state.get("expert_feedbacks", [])
+    external_result = state.get("external_result", {}) or {}
+    external_sources = external_result.get("sources", state.get("external_sources", []))
+    research_warnings = external_result.get("warnings", [])
+    safety_assessment = state.get("safety_assessment", {}) or {}
+    safety_approval = state.get("safety_approval", {}) or {}
+    structured_context = state.get("structured_context", "")
+    evidence_mappings = state.get("evidence_mappings", []) or []
 
     report = f"# 故障诊断报告：{fault}\n\n"
     report += f"- **诊断时间**: {timestamp}\n"
     report += f"- **审计通过**: {'是' if not has_gaps else '否（经修订）'}\n"
     report += f"- **修订次数**: {revision_count}\n\n"
+    report += f"- **外部研究模式**: {external_result.get('effective_mode', 'unknown')}\n"
+    report += f"- **外部研究状态**: {external_result.get('status', 'unknown')}\n"
+    report += f"- **外部查询/调用次数**: {external_result.get('query_count', 0)} / {external_result.get('search_count', 0)}\n\n"
+    report += f"- **安全风险等级**: {safety_assessment.get('risk_level', 'unknown')}\n"
+    report += f"- **高风险专家批准**: {'是' if safety_approval.get('approved') else '不适用/否'}\n\n"
     report += f"## 一、故障描述\n\n{fault}\n\n"
-    report += f"## 二、内部SOP知识\n\n{internal[:1000] if internal else '无'}\n\n"
-    report += f"## 三、外部搜索信息\n\n{external[:1000] if external else '无'}\n\n"
-    report += f"## 四、知识融合上下文\n\n{filtered[:2000] if filtered else '无'}\n\n"
-    report += f"## 五、审计结果\n\n{audit_result}\n\n"
+    report += f"## 二、设备与现场上下文\n\n{structured_context or '未提供'}\n\n"
+    report += "## 三、安全预检\n\n"
+    if safety_assessment.get("controls"):
+        for control in safety_assessment["controls"]:
+            report += f"- {control}\n"
+    else:
+        report += "- 未记录安全预检结果\n"
+    if safety_approval:
+        report += f"\n- **审批人**: {safety_approval.get('actor', '')}\n"
+        report += f"- **审批意见**: {safety_approval.get('feedback', '')}\n"
+    report += "\n"
+    report += f"## 四、内部SOP与历史案例\n\n{internal[:6000] if internal else '无'}\n\n"
+    report += f"## 五、外部研究信息\n\n{external[:4000] if external else '无'}\n\n"
+    if external_sources:
+        report += "### 外部来源\n\n"
+        for source in external_sources:
+            title = str(source.get("title") or "未命名来源").replace("[", "\\[").replace("]", "\\]")
+            report += f"- `{source.get('source_id', '')}` [{title}]({source.get('url', '')})\n"
+        report += "\n"
+    if research_warnings:
+        report += "### 外部研究警告\n\n"
+        for item in research_warnings:
+            report += f"- `{item.get('code', 'RESEARCH_WARNING')}` {item.get('message', '')}\n"
+        report += "\n"
+    report += f"## 六、知识融合上下文\n\n{filtered[:4000] if filtered else '无'}\n\n"
+    report += f"## 七、审计结果\n\n{audit_result}\n\n"
     if questions:
-        report += f"## 六、审计问题与专家反馈\n\n"
+        report += f"## 八、审计问题与专家反馈\n\n"
         for i, (q, fb) in enumerate(zip(questions, feedbacks)):
             report += f"### 问题 {i+1}\n- **问题**: {q}\n- **反馈**: {fb}\n\n"
-    report += f"## 七、故障排查流程图\n\n```mermaid\n{state.get('mermaid_diagram', '')}\n```\n"
+    report += "## 九、流程节点证据映射\n\n"
+    if evidence_mappings:
+        for mapping in evidence_mappings:
+            report += f"### `{mapping.get('node_id', '')}` {mapping.get('label', '')}\n\n"
+            report += f"- **映射置信度**: {mapping.get('confidence', 0)}\n"
+            report += f"- **需要复核**: {'是' if mapping.get('needs_review') else '否'}\n"
+            for evidence in mapping.get("evidence", []):
+                report += (
+                    f"- `{evidence.get('evidence_id', '')}` {evidence.get('title', '')} "
+                    f"({evidence.get('location', '')}, 置信度={evidence.get('confidence', 0)})\n"
+                )
+            report += "\n"
+    else:
+        report += "暂无证据映射。\n\n"
+    report += f"## 十、故障排查流程图\n\n```mermaid\n{state.get('mermaid_diagram', '')}\n```\n"
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
@@ -115,6 +192,7 @@ def save_diagnosis_memory(fault_input: str, state: dict) -> str:
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     memory_entry = {
+        "schema_version": "1.0",
         "id": f"{safe_name}_{timestamp}",
         "timestamp": timestamp,
         "fault_description": state.get("fault_input", ""),
@@ -124,6 +202,14 @@ def save_diagnosis_memory(fault_input: str, state: dict) -> str:
         "audit_passed": not state.get("has_gaps", True),
         "revision_count": state.get("revision_count", 0),
         "diagram_summary": state.get("mermaid_diagram", "")[:300],
+        "external_result": _compact_external_result(state.get("external_result", {})),
+        "internal_warning": state.get("internal_warning", ""),
+        "safety_assessment": state.get("safety_assessment", {}),
+        "safety_approval": state.get("safety_approval", {}),
+        "asset_context": state.get("asset_context", {}),
+        "structured_context": state.get("structured_context", ""),
+        "evidence_mappings": state.get("evidence_mappings", []),
+        "usage_events": state.get("usage_events", []),
     }
 
     memory_path = os.path.join(MEMORY_DIR, f"{safe_name}_{timestamp}.json")

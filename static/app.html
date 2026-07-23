@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>工业故障诊断助手</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="/vendor/mermaid/mermaid.min.js"></script>
+  <script src="/vendor/oml2d/index.min.js"></script>
   <style>
     :root{
       --bg:#f7f5f1;--side:#ece9e3;--main:#fff;--line:#dedad2;--active:#ded8d0;
@@ -13,10 +14,11 @@
       font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Arial,sans-serif;
     }
     *{box-sizing:border-box} html,body{height:100%;margin:0} body{overflow:hidden;color:var(--text);background:var(--bg)}
-    button,input,textarea{font:inherit} button{cursor:pointer}
+    button,input,textarea,select{font:inherit} button{cursor:pointer}
     .app{height:100dvh;min-height:0;overflow:hidden;display:grid;grid-template-columns:var(--left) minmax(0,1fr) var(--right)}
     .side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
     .search{padding:8px}.search input{width:100%;height:44px;border:1px solid var(--line);border-radius:13px;background:#f4f2ee;padding:0 14px;outline:none}
+    .user-card{margin:0 8px 8px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:#f4f2ee;display:flex;align-items:center;justify-content:space-between;gap:8px}.user-name{font-size:14px;font-weight:700;color:var(--ink)}.user-meta{font-size:12px;color:var(--muted);margin-top:2px}.user-card button{border:0;background:transparent;color:var(--muted);font-size:12px;padding:6px}.user-card button:hover{color:var(--danger)}
     .nav{padding:12px 8px;border-bottom:1px solid rgba(0,0,0,.05)}.nav button{width:100%;height:42px;border:0;background:transparent;border-radius:10px;text-align:left;padding:0 12px;font-size:15px}.nav button:hover{background:#fff}
     .section-title{padding:18px 14px 8px;color:var(--muted);font-size:13px;font-weight:700}.history{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 8px 12px;overscroll-behavior:contain}
     .item{width:100%;border:0;background:transparent;border-radius:10px;text-align:left;padding:10px 12px;margin:2px 0;color:var(--text);font-size:14px;line-height:1.35}.item:hover,.item.active{background:var(--active)}
@@ -28,22 +30,36 @@
     .msg{display:grid;grid-template-columns:42px minmax(0,820px);gap:14px;justify-content:center;padding:26px 28px;border-bottom:1px solid rgba(0,0,0,.06)}.msg.assistant{background:#faf9f7}
     .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#e7e2da;font-size:13px;font-weight:700}.msg.user .avatar{background:var(--brand);color:#fff}.body{font-size:16px;line-height:1.8;min-width:0}.body p{margin:0 0 12px}.body pre{white-space:pre-wrap;word-break:break-word;background:#f2f0ec;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto}
     .diagram{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px;overflow:auto}.diagram .mermaid{text-align:center}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .review-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.review-card summary{cursor:pointer;padding:11px 14px;font-weight:700;color:var(--ink);background:#f6f4f0}.review-card summary::marker{color:var(--brand)}.review-preview{max-height:52vh;margin:0;border:0;border-top:1px solid var(--line);border-radius:0}.review-card .actions{padding:0 14px 14px;margin-top:10px}
     .btn{height:36px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:0 13px;color:var(--text);font-size:14px;text-decoration:none;display:inline-flex;align-items:center}.btn:hover{background:#f7f5f1}.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-    .composer{flex:0 0 auto;background:#fff;border-top:1px solid rgba(0,0,0,.06);padding:14px 28px 18px}.box{max-width:940px;margin:0 auto;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 16px 48px rgba(0,0,0,.08);padding:10px}
-    .box textarea{width:100%;height:58px;max-height:180px;border:0;outline:0;resize:none;padding:10px 12px;font-size:16px;line-height:1.5}.foot{display:flex;align-items:center;justify-content:space-between;padding:4px}
+    .composer{flex:0 0 auto;background:linear-gradient(180deg,rgba(255,255,255,.82),#fff 24%);border-top:1px solid rgba(0,0,0,.06);padding:12px 28px 16px}.box{max-width:900px;margin:0 auto;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 12px 36px rgba(0,0,0,.08);padding:9px 10px}
+    .box #faultInput{width:100%;height:62px;max-height:180px;border:0;outline:0;resize:none;padding:10px 12px 6px;font-size:16px;line-height:1.5}.foot{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 2px;gap:10px}.foot-left,.foot-right{display:flex;align-items:center;gap:8px;min-width:0}.composer-summary{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}.context-chip{display:inline-flex;align-items:center;max-width:210px;height:28px;padding:0 9px;border:1px solid var(--line);border-radius:999px;background:#f7f5f1;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.context-chip.muted{opacity:.75}.settings-trigger{height:30px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:0 10px;color:var(--text);font-size:13px;white-space:nowrap}.settings-trigger:hover{background:#f7f5f1}
     .mode{display:flex;gap:4px;border:1px solid var(--line);background:#f4f2ee;border-radius:999px;padding:3px}.mode button{height:30px;min-width:76px;border:0;border-radius:999px;background:transparent;color:var(--muted)}.mode button.active{background:#fff;color:var(--ink)}
+    .research-options .supervisory-only.hidden{display:none}
     .send{width:36px;height:36px;border:0;border-radius:50%;background:#ddd8d0;color:#fff;font-size:18px}.send.ready{background:var(--brand)}
-    .feedback{max-width:940px;margin:0 auto 12px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 18px 44px rgba(0,0,0,.08);padding:14px}.hidden{display:none!important}.feedback-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:8px}.question{line-height:1.65;margin-bottom:10px}.feedback textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;padding:10px;outline:none;resize:vertical}.feedback-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+    .feedback{max-width:940px;margin:0 auto 12px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 18px 44px rgba(0,0,0,.08);padding:14px}.hidden{display:none!important}.feedback-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:8px}.question{line-height:1.65;margin-bottom:10px}.feedback-reference{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#faf9f7;color:var(--muted);font-size:13px}.feedback textarea{width:100%;min-height:72px;border:1px solid var(--line);border-radius:10px;padding:10px;outline:none;resize:vertical}.feedback-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+    .settings-dialog{width:min(820px,94vw);max-height:min(88vh,900px);border:0;border-radius:18px;padding:0;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.28);color:var(--text)}.settings-dialog[open]{display:flex;flex-direction:column}.settings-dialog::backdrop{background:rgba(0,0,0,.46)}.settings-body{padding:4px 20px 18px;overflow:auto}.settings-intro{color:var(--muted);font-size:13px;line-height:1.6;margin:12px 0}.settings-section{border-top:1px solid var(--line);padding:16px 0}.settings-section:first-of-type{border-top:0}.settings-section h3{font-size:15px;margin:0 0 12px;color:var(--ink)}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.settings-grid label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:13px}.settings-grid label.full{grid-column:1/-1}.settings-grid input,.settings-grid select,.settings-grid textarea{width:100%;min-height:38px;border:1px solid var(--line);border-radius:9px;background:#faf9f7;padding:8px 10px;color:var(--text);outline:none}.settings-grid input:focus,.settings-grid select:focus,.settings-grid textarea:focus{border-color:var(--brand);background:#fff}.measurement-list{display:flex;flex-direction:column;gap:8px}.measurement-row{display:grid;grid-template-columns:minmax(120px,1.5fr) minmax(90px,1fr) minmax(70px,.7fr) 34px;gap:8px}.measurement-row input{width:100%;height:38px;border:1px solid var(--line);border-radius:9px;background:#faf9f7;padding:0 9px}.measurement-row button{width:34px;height:38px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted)}.settings-preview{white-space:pre-wrap;background:#f7f5f1;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:64px;margin:0;font-size:13px;line-height:1.6}.settings-actions{display:flex;justify-content:flex-end;gap:10px;padding:12px 20px 18px;border-top:1px solid var(--line)}
+    .login-dialog{width:min(420px,92vw);border:0;border-radius:18px;padding:0;box-shadow:0 24px 80px rgba(0,0,0,.3)}.login-dialog::backdrop{background:rgba(0,0,0,.52)}.login-body{padding:22px}.login-body h2{margin:0 0 8px;color:var(--ink)}.login-body p{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.6}.login-body label{display:block;color:var(--muted);font-size:13px;margin:12px 0}.login-body input{display:block;width:100%;height:42px;margin-top:6px;border:1px solid var(--line);border-radius:9px;padding:0 11px}.login-body .primary{width:100%;justify-content:center;margin-top:8px}.login-error{min-height:20px;color:var(--danger);font-size:13px;margin-top:10px}
+    .diagram-dialog{width:min(1200px,94vw);height:min(88vh,900px);max-width:none;max-height:none;border:0;border-radius:16px;padding:0;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.28);color:var(--text)}.diagram-dialog[open]{display:flex;flex-direction:column}.diagram-dialog::backdrop{background:rgba(0,0,0,.48)}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-bottom:1px solid var(--line)}.dialog-head strong{color:var(--ink)}.dialog-close{width:34px;height:34px;border:0;border-radius:8px;background:#f2f0ec;font-size:20px;color:var(--muted)}.dialog-diagram{flex:1;min-height:0;margin:14px;overflow:auto}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 16px}
     .log{background:#f4f2ee;border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}.log-head{height:56px;flex:0 0 auto;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px}.log-head button{border:0;background:transparent;color:var(--muted)}
     .logs{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:12px;overscroll-behavior:contain}.empty{color:var(--muted);font-size:13px;line-height:1.6;padding:14px}.log-item{display:grid;grid-template-columns:8px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.07)}.dot{width:8px;height:8px;border-radius:50%;background:#b8b3aa;margin-top:7px}.log-label{font-size:12px;font-weight:700;color:var(--ink)}.log-msg{font-size:12px;color:var(--muted);line-height:1.55;margin-top:3px;word-break:break-word}.log-item.error .dot,.log-item.audit .dot{background:var(--danger)}.log-item.filter .dot{background:#15803d}.log-item.generate .dot{background:#d97706}.log-item.ask_expert .dot,.log-item.evaluate_questions .dot{background:var(--brand)}
-    @media(max-width:1180px){.app{grid-template-columns:var(--left) minmax(0,1fr)}.log{display:none}} @media(max-width:820px){.app{grid-template-columns:1fr}.side{display:none}.quick{grid-template-columns:1fr}.msg{grid-template-columns:34px minmax(0,1fr);padding:20px 14px}.composer{padding:12px}}
+    .manage-dialog{width:min(1280px,94vw);height:min(90vh,920px);border:0;border-radius:20px;padding:0;background:#f6f7f5;box-shadow:0 28px 90px rgba(24,32,28,.28);color:var(--text)}.manage-dialog::backdrop{background:rgba(23,29,26,.52);backdrop-filter:blur(3px)}.manage-dialog .dialog-head{height:68px;padding:0 24px;background:rgba(255,255,255,.96);position:sticky;top:0;z-index:5}.manage-dialog .dialog-head strong{font-size:19px}.manage-dialog .dialog-close{transition:.18s ease}.manage-dialog .dialog-close:hover{background:#e8e5df;color:var(--ink);transform:rotate(3deg)}
+    .manage-body{padding:22px 24px 34px;overflow:auto;height:calc(100% - 68px);scrollbar-gutter:stable}.manage-body>h3,.section-heading{font-size:16px;margin:24px 2px 10px;color:var(--ink)}.manage-body>h3:first-child{margin-top:0}.manage-body p{line-height:1.65}.manage-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.manage-toolbar .actions{margin:0}.manage-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.manage-grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.manage-grid input,.manage-grid select,.manage-grid textarea,.editor-text,.manage-card>input,.manage-card>textarea{width:100%;border:1px solid #d9ddd8;border-radius:10px;background:#fbfcfb;padding:10px 12px;color:var(--text);outline:none;transition:border-color .16s,box-shadow .16s,background .16s}.manage-grid input,.manage-grid select,.manage-card>input{min-height:44px}.manage-grid input:focus,.manage-grid select:focus,.manage-grid textarea:focus,.editor-text:focus,.manage-card>input:focus,.manage-card>textarea:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(16,163,127,.1)}
+    .form-field{display:flex;flex-direction:column;gap:7px;min-width:0}.form-field>span{font-size:12px;font-weight:700;color:#666f69;letter-spacing:.02em}.form-field.full{grid-column:1/-1}.form-field textarea{min-height:92px;resize:vertical}.form-hint{margin:7px 0 0;color:var(--muted);font-size:12px}.section-card,.manage-card{border:1px solid #dde1dc;border-radius:14px;padding:18px;margin:0 0 16px;background:#fff;box-shadow:0 1px 2px rgba(18,30,23,.03)}.section-card h3,.manage-card h3{font-size:16px;margin:0 0 5px;color:var(--ink)}.section-card .section-copy{margin:0 0 16px;color:var(--muted);font-size:13px}.section-card.subtle{background:#f0f7f4;border-color:#d4e9e1}.section-card.compact{padding:14px 16px}.manage-card summary{cursor:pointer;font-weight:750;color:var(--ink);padding:2px}.manage-card[open] summary{margin-bottom:14px}.manage-card pre,.manage-body>pre{background:#202923;color:#d9eee6;border:0;border-radius:12px;padding:14px;max-height:300px;overflow:auto;font-size:12px;line-height:1.65}
+    .table-shell{overflow:auto;border:1px solid #dde1dc;border-radius:14px;background:#fff;margin:10px 0 16px}.manage-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:760px}.manage-table th{position:sticky;top:0;z-index:2;background:#f2f4f2;color:#536059;font-size:12px;text-transform:none;letter-spacing:.02em}.manage-table th,.manage-table td{border-bottom:1px solid #e6e9e5;padding:12px 14px;text-align:left;vertical-align:top}.manage-table tbody tr:last-child td{border-bottom:0}.manage-table tbody tr:hover{background:#fafcfb}.manage-table td small{color:var(--muted);line-height:1.5}.manage-table td code{font-size:11px;color:#58645e}.manage-table .btn{height:30px;padding:0 9px;font-size:12px;margin:4px 4px 0 0}
+    .status-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#eef0ed;color:#59615d;padding:4px 9px;font-size:12px;font-weight:700}.status-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#909993}.status-pill[title="completed"]{background:#e7f6ef;color:#17795f}.status-pill[title="completed"]::before{background:#10a37f}.status-pill[title="running"],.status-pill[title="queued"]{background:#e8f1fb;color:#276497}.status-pill[title="running"]::before,.status-pill[title="queued"]::before{background:#3986c5}.status-pill[title="waiting_feedback"],.status-pill[title="waiting_safety"],.status-pill[title="pending_approval"]{background:#fff3d9;color:#906516}.status-pill[title="waiting_feedback"]::before,.status-pill[title="waiting_safety"]::before,.status-pill[title="pending_approval"]::before{background:#d89a25}.status-pill[title="failed"],.status-pill[title="denied"],.status-pill[title="cancelled"]{background:#fdeceb;color:#a43a32}.status-pill[title="failed"]::before,.status-pill[title="denied"]::before,.status-pill[title="cancelled"]::before{background:#d92d20}
+    .metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.metric-card{position:relative;overflow:hidden;min-height:142px;border:1px solid #dde1dc;border-radius:16px;padding:17px 18px;background:#fff}.metric-card::after{content:"";position:absolute;right:-25px;bottom:-35px;width:100px;height:100px;border-radius:50%;background:rgba(16,163,127,.07)}.metric-card .metric-label{color:#67716c;font-size:13px;font-weight:700}.metric-card .metric-value{font-size:30px;font-weight:780;line-height:1.15;color:#17221c;margin-top:20px;letter-spacing:-.03em}.metric-card .metric-note{color:var(--muted);font-size:11px;margin-top:8px}.metric-card.accent{background:linear-gradient(135deg,#0f8f71,#12aa84);border-color:transparent}.metric-card.accent .metric-label,.metric-card.accent .metric-value,.metric-card.accent .metric-note{color:#fff}.empty-state{padding:44px 20px;text-align:center;color:var(--muted)}.pagination{display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:14px;color:var(--muted);font-size:13px}.evidence-list{font-size:13px}.evidence-node{border-left:3px solid var(--brand);padding:7px 10px;margin:8px 0;background:#f7f5f1}
+    #oml2d-stage{opacity:.55;transition:opacity .3s ease}#oml2d-stage:hover{opacity:1}#oml2d-statusBar{opacity:.85}
+    #oml2d-tips{z-index:10000!important;top:auto!important;bottom:calc(100% + 8px)!important;min-width:150px;width:max-content!important;max-width:240px;pointer-events:none}
+    @media(max-width:1180px){.app{grid-template-columns:var(--left) minmax(0,1fr)}.log{display:none}.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}} @media(max-width:820px){.app{grid-template-columns:1fr}.side{display:none}.quick{grid-template-columns:1fr}.msg{grid-template-columns:34px minmax(0,1fr);padding:20px 14px}.composer{padding:10px}.feedback-reference{align-items:flex-start;flex-direction:column}.diagram-dialog{width:96vw;height:92vh}.dialog-diagram{margin:8px}.composer-summary .context-chip:nth-of-type(n+3){display:none}.mode button{min-width:58px}.settings-grid,.manage-grid,.manage-grid.cols-3{grid-template-columns:1fr}.settings-grid label.full,.form-field.full{grid-column:auto}.measurement-row{grid-template-columns:1fr 90px 70px 34px}.settings-body{padding:4px 14px 14px}.settings-actions{padding:10px 14px 14px}.manage-dialog{width:100vw;height:100dvh;max-width:none;max-height:none;border-radius:0}.manage-body{padding:16px}.manage-dialog .dialog-head{padding:0 16px}.metric-grid{grid-template-columns:1fr}.metric-card{min-height:120px}.manage-toolbar{align-items:stretch;flex-direction:column}.pagination{justify-content:center}}
   </style>
 </head>
 <body>
 <div class="app">
   <aside class="side">
     <div class="search"><input id="searchInput" placeholder="搜索历史诊断"></div>
-    <div class="nav"><button id="newBtn" type="button">＋ 新诊断</button><button type="button">◎ 工业故障诊断</button><button type="button">☆ 全部记录</button></div>
+    <div class="user-card hidden" id="userCard"><div><div class="user-name" id="currentUserName">未登录</div><div class="user-meta" id="currentUserMeta"></div></div><button id="logoutBtn" type="button">退出</button></div>
+    <div class="nav"><button id="newBtn" type="button">＋ 新诊断</button><button id="taskCenterBtn" type="button">☷ 任务中心</button><button id="assetCenterBtn" type="button">⚙ 设备资产</button><button id="knowledgeCenterBtn" type="button">▤ 受控 SOP 文档库</button><button id="dashboardBtn" type="button">◫ 质量成本看板</button></div>
     <div class="section-title">历史对话</div>
     <div class="history" id="history"><div class="empty">正在加载历史...</div></div>
   </aside>
@@ -65,31 +81,224 @@
       <div class="feedback hidden" id="feedbackBox">
         <div class="feedback-meta"><span id="questionIndex">专家反馈</span><span id="questionTotal">等待输入</span></div>
         <div class="question" id="questionText"></div>
+        <div class="feedback-reference hidden" id="feedbackReference"><span id="reviewVersion">当前待审流程图</span><button class="btn" id="reviewDiagramBtn" type="button">全屏查看流程图</button></div>
         <textarea id="feedbackInput" placeholder="输入专家反馈，按 Enter 提交，Shift + Enter 换行"></textarea>
         <div class="feedback-actions"><button class="btn" id="skipBtn" type="button">跳过</button><button class="btn primary" id="submitBtn" type="button">提交反馈</button></div>
       </div>
-      <div class="box">
-        <textarea id="faultInput" placeholder="有问题，尽管问，Shift + Enter 换行"></textarea>
-        <div class="foot"><div class="mode"><button class="active" data-mode="manual" type="button">协同</button><button data-mode="auto" type="button">自动</button></div><button class="send" id="sendBtn" type="button">↑</button></div>
+      <div class="box" id="diagnosisComposer">
+        <textarea id="faultInput" placeholder="描述故障现象、发生时间和已经完成的检查…  Shift + Enter 换行"></textarea>
+        <div class="foot">
+          <div class="foot-left"><button class="settings-trigger" id="diagnosisSettingsBtn" type="button">⚙ 诊断设置</button><div class="composer-summary" id="diagnosisSummary"><span class="context-chip muted">未指定设备</span><span class="context-chip muted">外部研究：基础</span></div></div>
+          <div class="foot-right"><div class="mode"><button class="active" data-mode="manual" type="button">协同</button><button data-mode="auto" type="button">自动</button></div><button class="send" id="sendBtn" type="button" aria-label="发送诊断">↑</button></div>
+        </div>
       </div>
     </div>
   </main>
   <aside class="log"><div class="log-head"><strong>运行日志</strong><button id="clearBtn" type="button">清空</button></div><div class="logs" id="logs"><div class="empty">节点进度会实时显示在这里。</div></div></aside>
 </div>
+<dialog class="diagram-dialog" id="diagramDialog" aria-labelledby="diagramDialogTitle">
+  <div class="dialog-head"><strong id="diagramDialogTitle">当前待审流程图</strong><button class="dialog-close" id="diagramDialogClose" type="button" aria-label="关闭">×</button></div>
+  <div class="diagram dialog-diagram" id="dialogDiagram"></div>
+  <div class="dialog-actions"><button class="btn" id="copyReviewDiagram" type="button">复制 Mermaid</button><button class="btn primary" id="diagramDialogDone" type="button">返回专家反馈</button></div>
+</dialog>
+<dialog class="settings-dialog" id="diagnosisSettingsDialog" aria-labelledby="diagnosisSettingsTitle">
+  <div class="dialog-head"><div><strong id="diagnosisSettingsTitle">本次诊断设置</strong></div><button class="dialog-close" id="diagnosisSettingsClose" type="button" aria-label="关闭">×</button></div>
+  <div class="settings-body">
+    <p class="settings-intro">这些信息只作用于下一次新诊断。任务开始后如需补充信息，请使用专家反馈区。</p>
+    <section class="settings-section">
+      <h3>设备与现场</h3>
+      <div class="settings-grid">
+        <label>设备<select id="assetId"><option value="">未指定设备</option></select></label>
+        <label>报警码<input id="alarmCode" type="text" placeholder="例如 F4、E101"></label>
+        <label class="full">运行工况<input id="operatingContext" type="text" placeholder="例如 80% 负载、环境 42℃、运行 20 分钟后复现"></label>
+        <label class="full">近期维修或变更<textarea id="maintenanceHistory" rows="2" placeholder="例如 3 天前更换联轴器并重新对中"></textarea></label>
+      </div>
+    </section>
+    <section class="settings-section">
+      <h3>现场测点</h3>
+      <div class="measurement-list" id="measurementList"></div>
+      <div class="actions"><button class="btn" id="addMeasurementBtn" type="button">＋ 添加测点</button></div>
+      <details style="margin-top:12px"><summary>高级：直接输入测点 JSON</summary><div class="settings-grid" style="margin-top:10px"><label class="full">测点 JSON<textarea id="measurements" rows="3" placeholder='{"轴承温度":{"value":85,"unit":"℃"}}'></textarea></label></div></details>
+    </section>
+    <section class="settings-section">
+      <h3>外部研究</h3>
+      <div class="settings-grid research-options">
+        <label>研究模式<select id="researchMode"><option value="off">关闭</option><option value="basic" selected>基础</option><option value="supervisory">主管</option></select></label>
+        <label>研究深度<select id="researchDepth"><option value="1">快速 · 1轮</option><option value="2" selected>标准 · 2轮</option><option value="3">深度 · 3轮</option></select></label>
+        <label>总时限<select id="researchTimeout"><option value="0" selected>不限时</option><option value="120">2 分钟</option><option value="300">5 分钟</option><option value="600">10 分钟</option></select></label>
+        <label>搜索服务<select id="searchApi"><option value="tavily" selected>Tavily</option><option value="duckduckgo">DuckDuckGo</option><option value="searxng">SearXNG</option><option value="perplexity">Perplexity</option></select></label>
+        <label class="supervisory-only hidden">研究任务数<input id="maxTasks" type="number" min="1" max="5" value="3"></label>
+        <label class="supervisory-only hidden">搜索总预算<input id="maxSearches" type="number" min="1" max="15" value="6"></label>
+      </div>
+    </section>
+    <section class="settings-section"><h3>提交内容预览</h3><pre class="settings-preview" id="contextPreview">未选择设备，未填写结构化现场信息。</pre></section>
+  </div>
+  <div class="settings-actions"><button class="btn" id="diagnosisSettingsCancel" type="button">取消</button><button class="btn primary" id="diagnosisSettingsDone" type="button">保存设置</button></div>
+</dialog>
+<dialog class="login-dialog" id="loginDialog" aria-labelledby="loginTitle">
+  <form class="login-body" id="loginForm">
+    <h2 id="loginTitle">登录诊断平台</h2>
+    <p>账号、所属租户和角色由服务端统一配置。登录后系统会按角色开放对应功能。</p>
+    <label>用户名<input id="loginUsername" autocomplete="username" required></label>
+    <label>密码<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" id="loginBtn" type="submit">登录</button>
+    <div class="login-error" id="loginError" role="alert"></div>
+  </form>
+</dialog>
+<dialog class="manage-dialog" id="manageDialog">
+  <div class="dialog-head"><strong id="manageTitle">管理中心</strong><button class="dialog-close" id="manageClose" type="button">×</button></div>
+  <div class="manage-body" id="manageBody"></div>
+</dialog>
 <script>
 if (window.mermaid) {
-  mermaid.initialize({startOnLoad:false, theme:"base", securityLevel:"loose"});
+  mermaid.initialize({startOnLoad:false, theme:"base", securityLevel:"strict"});
 }
 const $ = id => document.getElementById(id);
-const state = {mode:"manual", sessionId:null, running:false, lastDiagram:""};
+const state = {mode:"manual", sessionId:null, jobId:null, running:false, pendingKind:"", lastDiagram:"",reviewDiagram:"",reviewRevision:0,lastReviewKey:"",assets:[],settingsSnapshot:null,user:null,taskPage:0,taskFilters:{q:"",status:"",asset:""},waifuStatus:null,ttsEnabled:localStorage.getItem("waifuTts")==="1"};
+const ROLE_LABELS={viewer:"查看者",operator:"操作员",expert:"专家",admin:"管理员"};
+function apiHeaders(json=false){const h={};if(json)h["Content-Type"]="application/json";return h;}
+async function apiJson(url,options={}){options.credentials="same-origin";options.headers={...apiHeaders(!!options.body),...(options.headers||{})};const r=await fetch(url,options),d=await r.json().catch(()=>({}));if(r.status===401&&url!=="/api/auth/login")showLogin();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail||d));return d;}
+async function downloadBinary(url){const r=await fetch(url,{headers:apiHeaders()});if(!r.ok)throw new Error((await r.json()).detail||"导出失败");const blob=await r.blob(),a=document.createElement("a"),dis=r.headers.get("Content-Disposition")||"";a.href=URL.createObjectURL(blob);a.download=decodeURIComponent((dis.match(/filename\*=UTF-8''([^;]+)/)||[])[1]||"artifact");a.click();URL.revokeObjectURL(a.href);}
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function safeExternalUrl(url){ try{ const u=new URL(String(url||""),location.origin); return (u.protocol==="http:"||u.protocol==="https:")?u.href:null; }catch{ return null; } }
+let oml2d=null;
+(function(){
+  // oh-my-live2d 加载时会向 unpkg 请求最新版本号做更新提示；内网/CSP 环境直接返回本地伪响应，避免外部依赖。
+  const nativeFetch=window.fetch.bind(window);
+  window.fetch=function(input,init){
+    try{
+      const url=typeof input==="string"?input:(input&&input.url)||"";
+      if(url.indexOf("unpkg.com/oh-my-live2d")!==-1){
+        return Promise.resolve(new Response(JSON.stringify({version:"0.19.3"}),{status:200,headers:{"Content-Type":"application/json"}}));
+      }
+    }catch(e){}
+    return nativeFetch(input,init);
+  };
+})();
+function waifuSay(message,duration=4500,priority=5,speak=false){try{oml2d?.tipsMessage(message,duration,priority);}catch{} waifuHighlight(); if(speak)waifuSpeak(message);}
+function waifuHighlight(){const s=document.getElementById("oml2d-stage");if(!s)return;s.style.opacity="1";clearTimeout(s._fadeTimer);s._fadeTimer=setTimeout(()=>{s.style.opacity="";},6000);}
+function waifuSpeak(text){
+  if(!state.ttsEnabled||!window.speechSynthesis)return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="zh-CN";u.rate=1.05;speechSynthesis.speak(u);}catch{}
+}
+function waifuReport(){
+  const s=state.waifuStatus||{};let text;
+  if(state.pendingKind==="safety_approval"||s.kind==="safety")text=`高风险审批中！风险等级 ${s.level||"high"}，需要具备权限的专家批准后我才能继续诊断。`;
+  else if(state.pendingKind==="expert_question"||s.kind==="question")text=`等你回答第 ${s.idx||"?"}/${s.total||"?"} 个审计问题：${s.text||"请提供专家反馈"}`;
+  else if(state.running)text=`诊断进行中，当前进度：${s.label||"工作流运行中"}。`;
+  else if(s.kind==="done")text="最近一次诊断已完成，可以在左侧历史记录里查看，也可以直接开始新的诊断。";
+  else text=["描述故障现象就能开始诊断，点我可以随时了解进度。","先在“诊断设置”里选设备和研究模式，结果会更准。","类似故障可以先在左侧搜索历史案例，我会优先参考已确认的根因。"][Math.floor(Math.random()*3)];
+  waifuSay(text,8000,15,true);
+}
+function toggleWaifuVoice(){
+  state.ttsEnabled=!state.ttsEnabled;
+  localStorage.setItem("waifuTts",state.ttsEnabled?"1":"0");
+  waifuSay(state.ttsEnabled?"语音播报已开启，之后重要消息我会读出来。":"语音播报已关闭，消息只看气泡就好。",3000,10,state.ttsEnabled);
+}
+function initWaifu(){
+  if(!window.OML2D||oml2d)return;
+  try{
+    oml2d=OML2D.loadOml2d({
+      dockedPosition:"left",primaryColor:"#10a37f",sayHello:false,mobileDisplay:false,initialStatus:"active",
+      models:[{name:"shizuku",path:"/vendor/live2d-models/shizuku/shizuku.model.json",scale:0.09,position:[-6,4],volume:0}],
+      statusBar:{loadingMessage:"小织加载中",loadSuccessMessage:"小织已就位",loadFailMessage:"模型加载失败",reloadMessage:"重新加载",restMessage:"小织休息中，点我唤醒"},
+      menus:{
+        items(defaultItems){
+          const keep=defaultItems.filter(item=>item.id==="Rest");
+          keep.push(
+            {id:"Report",icon:"icon-like",title:"播报当前进度",onClick:()=>waifuReport()},
+            {id:"Voice",icon:"icon-setting",title:"语音播报开关",onClick:()=>toggleWaifuVoice()}
+          );
+          return keep;
+        }
+      },
+      tips:{
+        messageLine:3,
+        idleTips:{duration:5000,interval:20000,priority:2,message:["今天也要严格遵循 SOP 哦。","高压、带电、旋转部件相关故障，记得先过安全评估。","类似故障可以先在左侧搜索历史案例。","测量值或设备状态不明确时，先停止操作并升级给现场负责人。"]},
+        welcomeTips:{duration:5000,message:{daybreak:"早上好，准备开始今天的巡检了吗？",morning:"上午好，有故障现象可以直接描述给我。",noon:"中午好，诊断之余记得按时吃饭。",afternoon:"下午好，需要我帮忙排查故障吗？",dusk:"傍晚了，今天解决了几个故障？",night:"晚上好，夜间作业注意安全。",lateNight:"很晚了，高风险作业请一定按流程审批。",weeHours:"凌晨还在现场？辛苦，注意休息。"}},
+        copyTips:{message:["复制的内容记得核对来源哦。"]}
+      }
+    });
+    oml2d.onLoad(status=>{
+      if(status==="fail"){console.error("[waifu] 模型加载失败");oml2d=null;return;}
+      if(status==="success"){
+        const stage=document.getElementById("oml2d-stage");
+        if(stage&&!stage.dataset.waifuBound){stage.dataset.waifuBound="1";stage.addEventListener("click",()=>waifuReport());}
+      }
+    });
+  }catch(e){console.error("[waifu] 初始化失败:",e);oml2d=null;}
+}
+function can(role){return !!state.user?.allowed_roles?.includes(role);}
+function showLogin(message=""){$("loginError").textContent=message;const dialog=$("loginDialog");if(!dialog.open)dialog.showModal();setTimeout(()=>$("loginUsername").focus(),0);}
+function applyUser(user){
+  state.user=user;$("userCard").classList.remove("hidden");$("currentUserName").textContent=user.display_name||user.subject;$("currentUserMeta").textContent=`${ROLE_LABELS[user.role]||user.role} · ${user.tenant_id}`;$("userCard").title=(user.capabilities||[]).join("\n");$("logoutBtn").classList.toggle("hidden",user.authenticated===false);
+  $("dashboardBtn").classList.toggle("hidden",!can("expert"));
+  document.querySelectorAll(".mode button").forEach(button=>button.disabled=!can("operator"));
+  if(!can("operator"))$("faultInput").placeholder="当前账号只有查看权限，无法发起诊断";
+  else $("faultInput").placeholder="描述故障现象、发生时间和已经完成的检查…  Shift + Enter 换行";
+  setRunning(state.running);
+}
+async function loadCurrentUser(){try{const data=await apiJson("/api/auth/me");applyUser(data.user);return true}catch(e){showLogin(e.message==="登录已失效或未登录"?"":e.message);return false}}
+const JOB_STATUS_LABELS={draft:"草稿",queued:"排队中",running:"运行中",waiting_feedback:"等待专家反馈",waiting_safety:"等待安全审批",pending_approval:"等待流程审批",completed:"已完成",failed:"失败",cancelled:"已取消",cancel_requested:"正在取消",interrupted:"进程中断",denied:"安全审批拒绝",expired:"已过期",archived:"已归档"};
+const INDEX_STATUS_LABELS={pending:"待同步",indexing:"同步中",ready:"Milvus 已同步",failed:"Milvus 同步失败",removed:"已从 Milvus 移除",disabled:"仅 SQLite"};
+const PENDING_KIND_LABELS={expert_question:"等待回答专家问题",safety_approval:"等待安全审批"};
+const jobStatusLabel=v=>JOB_STATUS_LABELS[v]||v;
+const indexStatusLabel=v=>INDEX_STATUS_LABELS[v]||v||"待同步";
 function addMsg(role, html){ $("welcome")?.remove(); const el=document.createElement("article"); el.className="msg "+role; el.innerHTML=`<div class="avatar">${role==="user"?"你":"AI"}</div><div class="body">${html}</div>`; $("chat").appendChild(el); $("chat").scrollTop=$("chat").scrollHeight; return el.querySelector(".body"); }
 function addText(role, text){ return addMsg(role, `<p>${esc(text).replace(/\n/g,"<br>")}</p>`); }
 function clearLogs(){ $("logs").innerHTML='<div class="empty">节点进度会实时显示在这里。</div>'; }
 function log(node,label,msg){ const list=$("logs"); list.querySelector(".empty")?.remove(); const el=document.createElement("div"); el.className="log-item "+esc(node||""); el.innerHTML=`<div class="dot"></div><div><div class="log-label">${esc(label||node||"event")}</div><div class="log-msg">${esc(msg||"")}</div></div>`; list.appendChild(el); list.scrollTop=list.scrollHeight; }
-function setRunning(v){ state.running=v; $("sendBtn").disabled=v; $("faultInput").disabled=v; }
+function diagramVersionLabel(revision){ return Number(revision||0)>0?`第 ${Number(revision)} 次修订版本`:"初始版本"; }
+async function renderMermaidInto(container,source){
+  container.innerHTML="";
+  const diagram=String(source||"").trim();
+  if(!diagram){ const pre=document.createElement("pre"); pre.textContent="暂无流程图"; container.appendChild(pre); return; }
+  const node=document.createElement("div"); node.className="mermaid"; node.textContent=diagram; container.appendChild(node);
+  try{ if(!window.mermaid) throw new Error("Mermaid 未加载"); await mermaid.run({nodes:[node]}); }
+  catch(e){ container.innerHTML=""; const pre=document.createElement("pre"); pre.textContent=diagram||e.message; container.appendChild(pre); }
+}
+function closeDiagramDialog(){ const dialog=$("diagramDialog"); if(typeof dialog.close==="function"&&dialog.open) dialog.close(); else dialog.removeAttribute("open"); $("feedbackInput").focus(); }
+function openReviewDiagram(){
+  if(!state.reviewDiagram) return;
+  $("diagramDialogTitle").textContent=`当前待审流程图 · ${diagramVersionLabel(state.reviewRevision)}`;
+  const dialog=$("diagramDialog");
+  if(typeof dialog.showModal==="function"){ if(!dialog.open) dialog.showModal(); }else dialog.setAttribute("open","");
+  requestAnimationFrame(()=>renderMermaidInto($("dialogDiagram"),state.reviewDiagram));
+}
+function addReviewDiagram(diagram,revision){
+  const key=`${revision}\n${diagram}`;
+  if(!diagram||key===state.lastReviewKey) return;
+  state.lastReviewKey=key;
+  const version=diagramVersionLabel(revision);
+  const body=addMsg("assistant",`<div class="review-card"><details open><summary>当前待审流程图 · ${esc(version)}</summary><div class="diagram review-preview" data-review-diagram></div></details><div class="actions"><button class="btn" data-open-review type="button">全屏查看</button></div></div>`);
+  renderMermaidInto(body.querySelector("[data-review-diagram]"),diagram);
+  body.querySelector("[data-open-review]").addEventListener("click",openReviewDiagram);
+}
+function addMeasurementRow(name="",value="",unit=""){
+  const row=document.createElement("div"); row.className="measurement-row";
+  row.innerHTML=`<input data-measure-name placeholder="测点名称，如轴承温度" value="${esc(name)}"><input data-measure-value placeholder="数值，如 85" value="${esc(value)}"><input data-measure-unit placeholder="单位，如 ℃" value="${esc(unit)}"><button type="button" aria-label="删除测点">×</button>`;
+  row.querySelectorAll("input").forEach(input=>input.addEventListener("input",updateContextPreview));
+  row.querySelector("button").onclick=()=>{row.remove();if(!$("measurementList").children.length)addMeasurementRow();updateContextPreview();};
+  $("measurementList").appendChild(row); return row;
+}
+function collectMeasurements(){
+  let result={}; const raw=$("measurements").value.trim();
+  if(raw){try{result=JSON.parse(raw)}catch{throw new Error("高级测点 JSON 格式不正确")}if(!result||Array.isArray(result)||typeof result!=="object")throw new Error("高级测点 JSON 必须是对象");}
+  $("measurementList").querySelectorAll(".measurement-row").forEach(row=>{const name=row.querySelector("[data-measure-name]").value.trim();if(!name)return;const rawValue=row.querySelector("[data-measure-value]").value.trim(),unit=row.querySelector("[data-measure-unit]").value.trim();let value=rawValue;if(rawValue!==""&&Number.isFinite(Number(rawValue)))value=Number(rawValue);result[name]=unit?{value,unit}:value;});
+  return result;
+}
+function measurementRows(){return [...$("measurementList").querySelectorAll(".measurement-row")].map(row=>({name:row.querySelector("[data-measure-name]").value,value:row.querySelector("[data-measure-value]").value,unit:row.querySelector("[data-measure-unit]").value}));}
+const SETTINGS_IDS=["assetId","alarmCode","operatingContext","maintenanceHistory","measurements","researchMode","researchDepth","researchTimeout","searchApi","maxTasks","maxSearches"];
+function snapshotSettings(){return {values:Object.fromEntries(SETTINGS_IDS.map(id=>[id,$(id).value])),rows:measurementRows()};}
+function restoreSettings(snapshot){if(!snapshot)return;SETTINGS_IDS.forEach(id=>$(id).value=snapshot.values[id]??"");$("measurementList").innerHTML="";(snapshot.rows.length?snapshot.rows:[{}]).forEach(x=>addMeasurementRow(x.name||"",x.value||"",x.unit||""));syncResearchFields();updateContextPreview();}
+function syncResearchFields(){const supervisory=$("researchMode").value==="supervisory";document.querySelectorAll(".supervisory-only").forEach(el=>el.classList.toggle("hidden",!supervisory));}
+function openDiagnosisSettings(){if(state.running)return;state.settingsSnapshot=snapshotSettings();updateContextPreview();const dialog=$("diagnosisSettingsDialog");if(!dialog.open)dialog.showModal();}
+function closeDiagnosisSettings(save=false){if(!save)restoreSettings(state.settingsSnapshot);state.settingsSnapshot=null;if($("diagnosisSettingsDialog").open)$("diagnosisSettingsDialog").close();$("diagnosisSettingsBtn").focus();}
+function showDiagnosisComposer(){$("diagnosisComposer").classList.remove("hidden");}
+function showFeedbackComposer(){$("diagnosisComposer").classList.add("hidden");}
+function setRunning(v){const diagnosisDisabled=v||!can("operator");state.running=v;$("sendBtn").disabled=diagnosisDisabled;$("faultInput").disabled=diagnosisDisabled;$("diagnosisSettingsBtn").disabled=diagnosisDisabled;document.querySelectorAll(".mode button").forEach(el=>el.disabled=diagnosisDisabled);SETTINGS_IDS.forEach(id=>$(id).disabled=diagnosisDisabled);$("addMeasurementBtn").disabled=diagnosisDisabled;$("measurementList").querySelectorAll("input,button").forEach(el=>el.disabled=diagnosisDisabled);}
 async function streamSSE(url, body, handlers){
-  const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const r=await fetch(url,{method:"POST",headers:apiHeaders(true),body:JSON.stringify(body)});
   if(!r.ok) throw new Error(await r.text());
   const rd=r.body.getReader(), dec=new TextDecoder(); let buf="";
   while(true){ const ch=await rd.read(); if(ch.done) break; buf+=dec.decode(ch.value,{stream:true}); let i;
@@ -99,51 +308,107 @@ async function streamSSE(url, body, handlers){
     }
   }
 }
-async function start(){
-  const fault=$("faultInput").value.trim(); if(!fault || state.running) return;
-  $("feedbackBox").classList.add("hidden"); clearLogs(); addText("user", fault);
-  const progress=addMsg("assistant","<p>已收到故障描述，正在启动诊断工作流...</p>");
-  setRunning(true); $("sendBtn").classList.remove("ready"); log("dispatch","[dispatch]","启动诊断会话");
-  try{
-    await streamSSE("/api/start",{fault_input:fault,auto_mode:state.mode==="auto"},{
-      progress:o=>{log(o.node,o.label,o.message); progress.innerHTML=`<p>${esc(o.message||"工作流运行中...")}</p>`},
-      question:o=>{state.sessionId=o.session_id; showQuestion(o); progress.innerHTML="<p>审计发现需要专家确认的问题，请在下方输入反馈。</p>"},
-      done:o=>{renderResult(o); loadHistory()},
-      error:o=>{log("error","[error]",o.message); progress.innerHTML=`<p style="color:var(--danger)">诊断失败：${esc(o.message)}</p>`}
-    });
-  }catch(e){ log("error","[error]",e.message); progress.innerHTML=`<p style="color:var(--danger)">请求失败：${esc(e.message)}</p>`; }
+function diagnosisStreamHandlers(progress,overrides={}){
+  const handlers={
+    queued:o=>log("dispatch","[queue]",`任务 ${o.session_id} 已进入队列，并发上限 ${o.max_concurrency}`),
+    research_started:o=>{const limit=o.research_timeout_seconds===0?"不限时":o.research_timeout_seconds==null?"环境默认":`${o.research_timeout_seconds} 秒`;log("external_research","[research]",`外部研究开始：${o.requested_mode}，预算 ${o.max_total_searches}，时限 ${limit}`)},
+    research_completed:o=>log("external_research","[research]",`外部研究 ${o.status}：查询 ${o.query_count}，调用 ${o.search_count}，来源 ${o.source_count}`),
+    research_warning:o=>log("error",`[${o.code||"warning"}]`,o.message||"外部研究警告"),
+    progress:o=>{log(o.node,o.label,o.message); progress.innerHTML=`<p>${esc(o.message||"工作流运行中...")}</p>`; state.waifuStatus={kind:"running",label:o.label||o.node||""};},
+    expert_question:o=>{state.sessionId=o.session_id; showQuestion(o); progress.innerHTML="<p>审计发现需要专家确认的问题，请在下方输入反馈。</p>"; waifuSay(`审计发现 ${o.total||"?"} 个问题，等你回答第 ${Number(o.question_index||0)+1} 个。`,6000,10);},
+    safety_approval_required:o=>{state.sessionId=o.session_id;showSafetyApproval(o);progress.innerHTML="<p style='color:var(--danger)'>检测到高风险工业场景，等待授权专家审批。</p>"; waifuSay("高风险场景！必须由具备权限的专家审批后才能继续。",8000,20,true);},
+    done:o=>{state.jobId=o.session_id;renderResult(o); loadHistory(); state.waifuStatus={kind:"done"}; waifuSay("诊断完成！流程图已生成，记得走审批发布流程。",5000,10);},
+    denied:o=>{state.sessionId=null;state.pendingKind="";$("feedbackBox").classList.add("hidden");showDiagnosisComposer();progress.innerHTML=`<p style="color:var(--danger)">${esc(o.message)}</p>`;loadHistory(); waifuSay("安全审批未通过，任务已停止。",5000,20);},
+    cancelled:o=>{showDiagnosisComposer();progress.innerHTML="<p>任务已取消。</p>";loadHistory(); waifuSay("任务已取消。",4000,5);},
+    error:o=>{showDiagnosisComposer();log("error","[error]",o.message); progress.innerHTML=`<p style="color:var(--danger)">诊断失败：${esc(o.message)}</p>`; waifuSay("出错了…可以看看右侧运行日志。",5000,20);}
+  };
+  return Object.assign(handlers,overrides);
+}
+async function runDiagnosisStream(url,body,progress,overrides={}){
+  try{ await streamSSE(url,body,diagnosisStreamHandlers(progress,overrides)); }
+  catch(e){ showDiagnosisComposer();log("error","[error]",e.message);progress.innerHTML=`<p style="color:var(--danger)">请求失败：${esc(e.message)}</p>`; }
   finally{ setRunning(false); }
 }
-function showQuestion(o){ $("feedbackBox").classList.remove("hidden"); $("questionIndex").textContent=`问题 ${Number(o.question_index||0)+1}`; $("questionTotal").textContent=`共 ${o.total||0} 个`; $("questionText").textContent=o.question||"请提供专家反馈"; $("feedbackInput").value=""; $("feedbackInput").focus(); }
+async function start(){
+  const fault=$("faultInput").value.trim(); if(!fault || state.running) return;
+  let measurements;try{measurements=collectMeasurements()}catch(e){alert(e.message);openDiagnosisSettings();return;}
+  state.sessionId=null; state.pendingKind=""; state.reviewDiagram=""; state.reviewRevision=0; state.lastReviewKey="";
+  $("feedbackReference").classList.add("hidden");
+  if($("diagramDialog").open) $("diagramDialog").close();
+  $("faultInput").value=""; $("sendBtn").classList.remove("ready");
+  $("feedbackBox").classList.add("hidden"); clearLogs(); addText("user", fault);
+  const progress=addMsg("assistant","<p>已收到故障描述，正在启动诊断工作流...</p>");
+  setRunning(true); log("dispatch","[dispatch]","启动诊断会话"); state.waifuStatus={kind:"running",label:"启动诊断会话"}; waifuSay("收到！正在检索知识并分析故障…");
+  const request={fault_input:fault,auto_mode:state.mode==="auto",research_mode:$("researchMode").value,research_depth:Number($("researchDepth").value),research_timeout_seconds:Number($("researchTimeout").value),search_api:$("searchApi").value,max_research_tasks:Number($("maxTasks").value),max_total_searches:Number($("maxSearches").value),asset_id:$("assetId").value,alarm_code:$("alarmCode").value.trim(),operating_context:$("operatingContext").value.trim(),measurements,maintenance_history:$("maintenanceHistory").value.trim()};
+  await runDiagnosisStream("/api/start",request,progress);
+}
+function showQuestion(o){
+  state.pendingKind="expert_question";
+  state.waifuStatus={kind:"question",text:o.question||"",idx:Number(o.question_index||0)+1,total:o.total||0};
+  showFeedbackComposer();
+  $("feedbackBox").classList.remove("hidden");
+  $("questionIndex").textContent=`问题 ${Number(o.question_index||0)+1}`;
+  $("questionTotal").textContent=`共 ${o.total||0} 个`;
+  $("questionText").textContent=o.question||"请提供专家反馈";
+  const diagram=String(o.diagram||"").trim(), revision=Number(o.revision_count||0);
+  if(diagram){ state.reviewDiagram=diagram; state.reviewRevision=revision; addReviewDiagram(diagram,revision); }
+  $("feedbackReference").classList.toggle("hidden",!state.reviewDiagram);
+  $("reviewVersion").textContent=`当前待审流程图 · ${diagramVersionLabel(state.reviewRevision)}`;
+  $("feedbackInput").value=""; $("feedbackInput").placeholder="输入专家反馈，按 Enter 提交，Shift + Enter 换行"; $("feedbackInput").focus();
+  $("skipBtn").textContent="跳过"; $("submitBtn").textContent="提交反馈";
+  $("skipBtn").disabled=false;$("submitBtn").disabled=false;
+}
+function showSafetyApproval(o){
+  state.pendingKind="safety_approval";
+  state.waifuStatus={kind:"safety",level:o.risk_level||"high"};
+  showFeedbackComposer();
+  $("feedbackBox").classList.remove("hidden");
+  $("questionIndex").textContent=`安全审批 · ${o.risk_level||"high"}`;
+  $("questionTotal").textContent=can("expert")?"必须由专家确认":"当前账号无审批权限";
+  const rules=(o.matched_rules||[]).map(x=>`• ${x.message}`).join("\n");
+  const controls=(o.controls||[]).map(x=>`• ${x}`).join("\n");
+  $("questionText").textContent=`${o.message||"高风险任务"}\n\n命中规则：\n${rules}\n\n安全控制：\n${controls}`;
+  $("feedbackReference").classList.add("hidden");
+  $("feedbackInput").value=""; $("feedbackInput").placeholder="填写审批依据或拒绝原因"; $("feedbackInput").focus();
+  $("skipBtn").textContent="拒绝并停止"; $("submitBtn").textContent="批准并继续";
+  $("skipBtn").disabled=!can("expert");$("submitBtn").disabled=!can("expert");
+}
 async function submitFeedback(skip){
   if(!state.sessionId) return; const fb=skip?"":$("feedbackInput").value.trim();
   $("feedbackBox").classList.add("hidden"); addText("user", fb || "跳过该问题");
   const progress=addMsg("assistant","<p>已提交反馈，正在继续修订流程图...</p>"); setRunning(true); log("ask_expert","[feedback]",fb||"跳过该问题");
-  try{
-    await streamSSE("/api/resume",{session_id:state.sessionId,feedback:fb},{
-      progress:o=>{log(o.node,o.label,o.message); progress.innerHTML=`<p>${esc(o.message||"工作流继续运行中...")}</p>`},
-      question:o=>{state.sessionId=o.session_id; showQuestion(o); progress.innerHTML="<p>还有新的审计问题需要专家反馈。</p>"},
-      done:o=>{renderResult(o); loadHistory()},
-      error:o=>{log("error","[error]",o.message); progress.innerHTML=`<p style="color:var(--danger)">恢复诊断失败：${esc(o.message)}</p>`}
-    });
-  }catch(e){ log("error","[error]",e.message); progress.innerHTML=`<p style="color:var(--danger)">请求失败：${esc(e.message)}</p>`; }
-  finally{ setRunning(false); }
+  const resume={session_id:state.sessionId,feedback:fb}; if(state.pendingKind==="safety_approval") resume.approved=!skip;
+  await runDiagnosisStream("/api/resume",resume,progress,{
+    progress:o=>{log(o.node,o.label,o.message); progress.innerHTML=`<p>${esc(o.message||"工作流继续运行中...")}</p>`},
+    expert_question:o=>{state.sessionId=o.session_id; showQuestion(o); progress.innerHTML="<p>还有新的审计问题需要专家反馈。</p>"},
+    error:o=>{showDiagnosisComposer();log("error","[error]",o.message);progress.innerHTML=`<p style="color:var(--danger)">恢复诊断失败：${esc(o.message)}</p>`}
+  });
 }
 async function renderResult(o){
+  state.sessionId=null; state.pendingKind=""; $("feedbackBox").classList.add("hidden");
+  showDiagnosisComposer();
   state.lastDiagram=o.mermaid_diagram||"";
   const diagramHref=o.paths?.diagram?`/api/diagram/${encodeURIComponent(o.paths.diagram.split(/[\\/]/).pop())}`:"";
   const reportHref=o.paths?.report?`/api/report/${encodeURIComponent(o.paths.report.split(/[\\/]/).pop())}`:"";
-  const body=addMsg("assistant",`<p><strong>诊断完成。</strong>${esc(o.has_gaps?"已输出当前版本":"审计通过")}，修订次数：${esc(o.revision_count??0)}。</p><div class="diagram"><div class="mermaid">${esc(state.lastDiagram)}</div></div><div class="actions"><button class="btn" data-copy>复制 Mermaid</button>${diagramHref?`<a class="btn" href="${diagramHref}" download>下载流程图</a>`:""}${reportHref?`<a class="btn" href="${reportHref}" download>下载报告</a>`:""}</div>`);
-  try{
-    if (!window.mermaid) throw new Error("Mermaid 未加载，显示源码");
-    await mermaid.run({nodes:[body.querySelector(".mermaid")]});
-  }catch(e){ body.querySelector(".diagram").innerHTML=`<pre>${esc(state.lastDiagram||e.message)}</pre>`; }
+  const research=o.external_result||{}, sources=o.external_sources||research.sources||[], warnings=research.warnings||[];
+  const sourceHtml=sources.length?`<p><strong>外部来源（${sources.length}）：</strong></p><ul>${sources.map(s=>{const href=safeExternalUrl(s.url),label=esc(s.title||s.url||"来源");return `<li><code>${esc(s.source_id||"")}</code> ${href?`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${label}</a>`:`<span>${label}</span>`}</li>`;}).join("")}</ul>`:"";
+  const warningHtml=warnings.length?`<p><strong>研究警告：</strong></p><ul>${warnings.map(w=>`<li><code>${esc(w.code||"WARNING")}</code> ${esc(w.message||"")}</li>`).join("")}</ul>`:"";
+  const managed=o.managed_knowledge_hits||[],cases=o.historical_case_hits||[],knowledgeHtml=`<details><summary><strong>本次内部知识来源</strong>（受控 SOP ${managed.length}，历史案例 ${cases.length}）</summary><p>受控 SOP 检索后端：<code>${esc(o.managed_knowledge_backend||'none')}</code>${o.managed_knowledge_warning?`　<span style="color:var(--danger)">${esc(o.managed_knowledge_warning)}</span>`:''}</p>${managed.length?`<h4>受控 SOP</h4><ul>${managed.map(x=>`<li><code>${esc(x.evidence_id)}</code> ${esc(x.title)} v${esc(x.version)} · ${esc(x.location)} · ${esc(x.retrieval_backend||'')}</li>`).join('')}</ul>`:''}${cases.length?`<h4>历史案例</h4><ul>${cases.map(x=>`<li><code>${esc(x.evidence_id)}</code> ${esc(x.fault_description)} · 可信度 ${esc(x.credibility)}</li>`).join('')}</ul>`:''}<h4>内部知识融合文本</h4><pre>${esc(o.internal_knowledge||'未命中内置或受控 SOP')}</pre></details>`;
+  const safety=o.safety_assessment||{};
+  const evidence=o.evidence_mappings||[],evidenceHtml=evidence.length?`<details><summary><strong>流程节点证据（${evidence.length}）</strong></summary><div class="evidence-list">${evidence.map(m=>`<div class="evidence-node"><code>${esc(m.node_id)}</code> ${esc(m.label)}　置信度 ${esc(m.confidence)}${m.needs_review?'　<span style="color:var(--danger)">需复核</span>':''}<ul>${(m.evidence||[]).map(e=>`<li><code>${esc(e.evidence_id)}</code> ${esc(e.title)} · ${esc(e.location)}${e.relation==='contradicts'?' · <strong style="color:var(--danger)">冲突</strong>':''}</li>`).join('')}</ul></div>`).join('')}</div></details>`:"";
+  const jobId=o.session_id||state.jobId;
+  const body=addMsg("assistant",`<p><strong>诊断工作流完成，流程版本待审批。</strong>${esc(o.has_gaps?"已输出当前版本":"审计通过")}，修订次数：${esc(o.revision_count??0)}。</p><p><strong>安全风险：</strong>${esc(safety.risk_level||"low")}　<strong>设备：</strong>${esc(o.asset_context?.name||"未指定")}　<strong>外部研究：</strong>${esc(research.effective_mode||"off")} / ${esc(research.status||"skipped")}。</p>${warningHtml}${knowledgeHtml}${sourceHtml}<div class="diagram" data-result-diagram></div>${evidenceHtml}<div class="actions"><button class="btn" data-copy>复制 Mermaid</button>${diagramHref?`<button class="btn" data-download="${diagramHref}" data-filename="diagram.mmd">下载流程图</button>`:""}${reportHref?`<button class="btn" data-download="${reportHref}" data-filename="report.md">下载报告</button>`:""}<button class="btn" data-export="docx">Word</button><button class="btn" data-export="pdf">PDF</button><button class="btn" data-export="checklist">现场检查单</button><button class="btn" data-edit>编辑/审批流程</button><button class="btn" data-confirm>回填处理结果</button></div>`);
+  await renderMermaidInto(body.querySelector("[data-result-diagram]"),state.lastDiagram);
   body.querySelector("[data-copy]")?.addEventListener("click",async ev=>{await navigator.clipboard.writeText(state.lastDiagram); ev.target.textContent="已复制"; setTimeout(()=>ev.target.textContent="复制 Mermaid",1200);});
+  body.querySelectorAll("[data-download]").forEach(btn=>btn.addEventListener("click",async()=>{const r=await fetch(btn.dataset.download,{headers:apiHeaders()}),d=await r.json();if(!r.ok)throw new Error(d.detail||"下载失败");const blob=new Blob([d.content||""],{type:"text/plain;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=d.file||btn.dataset.filename;a.click();URL.revokeObjectURL(a.href);}));
+  body.querySelectorAll("[data-export]").forEach(btn=>btn.onclick=()=>downloadBinary(`/api/jobs/${jobId}/export?format=${btn.dataset.export}`).catch(e=>alert(e.message)));
+  body.querySelector("[data-edit]").onclick=()=>openProcedureEditor(jobId,state.lastDiagram);
+  body.querySelector("[data-confirm]").onclick=()=>openCaseConfirmation(jobId);
 }
 async function loadHistory(){
   const list=$("history"); list.innerHTML='<div class="empty">正在加载历史...</div>';
   try{
-    const r=await fetch("/api/history"), d=await r.json(), items=[];
+    const r=await fetch("/api/history",{headers:apiHeaders()}); if(!r.ok) throw new Error((await r.json()).detail||`HTTP ${r.status}`); const d=await r.json(), items=[];
     (d.memory||[]).forEach(x=>items.push({type:"memory",title:x.fault||"历史诊断",time:x.timestamp||"",file:x.file}));
     (d.diagrams||[]).forEach(x=>items.push({type:"diagram",title:(x.file||"流程图").replace(/_diagram\.mmd$|\.mmd$/,""),time:x.mtime||"",file:x.file}));
     items.sort((a,b)=>String(b.time).localeCompare(String(a.time)));
@@ -153,23 +418,126 @@ async function loadHistory(){
   }catch(e){ list.innerHTML=`<div class="empty">历史加载失败：${esc(e.message)}</div>`; }
 }
 function activate(btn){ document.querySelectorAll(".item").forEach(x=>x.classList.remove("active")); btn?.classList.add("active"); }
-async function loadDiagram(file,btn){ activate(btn); const r=await fetch(`/api/diagram/${encodeURIComponent(file)}`), d=await r.json(); state.lastDiagram=d.content||""; const body=addMsg("assistant",`<p><strong>已加载历史流程图：</strong>${esc(file)}</p><div class="diagram"><div class="mermaid">${esc(state.lastDiagram)}</div></div>`); try{if(!window.mermaid) throw new Error("Mermaid 未加载，显示源码"); await mermaid.run({nodes:[body.querySelector(".mermaid")]})}catch(e){body.querySelector(".diagram").innerHTML=`<pre>${esc(state.lastDiagram||e.message)}</pre>`} }
+async function loadDiagram(file,btn){ activate(btn); const r=await fetch(`/api/diagram/${encodeURIComponent(file)}`,{headers:apiHeaders()}), d=await r.json(); state.lastDiagram=d.content||""; const body=addMsg("assistant",`<p><strong>已加载历史流程图：</strong>${esc(file)}</p><div class="diagram" data-history-diagram></div>`); await renderMermaidInto(body.querySelector("[data-history-diagram]"),state.lastDiagram); }
 async function loadMemory(file,btn){
-  activate(btn); const r=await fetch(`/api/memory/${encodeURIComponent(file)}`), d=await r.json(), m=d.content||{};
+  activate(btn); const r=await fetch(`/api/memory/${encodeURIComponent(file)}`,{headers:apiHeaders()}), d=await r.json(), m=d.content||{};
   addMsg("assistant",`<p><strong>已加载历史诊断：</strong>${esc(m.fault_description||file)}</p>
     <p><strong>诊断时间：</strong>${esc(m.timestamp||"")}</p>
     <p><strong>审计状态：</strong>${m.audit_passed?"通过":"未通过或已修订"}　<strong>修订次数：</strong>${esc(m.revision_count??0)}</p>
     <p><strong>知识融合摘要：</strong></p><pre>${esc(m.filtered_context_summary||"无")}</pre>
     <p><strong>流程图摘要：</strong></p><pre>${esc(m.diagram_summary||"无")}</pre>`);
 }
+function openManage(title,html){$("manageTitle").textContent=title;$("manageBody").innerHTML=html;$("manageBody").scrollTop=0;const d=$("manageDialog");if(!d.open)d.showModal();}
+function closeManage(){if($("manageDialog").open)$("manageDialog").close();}
+function updateContextPreview(){
+  const a=state.assets.find(x=>x.id===$("assetId").value),lines=[];let measurements={},measurementError="";
+  if(a)lines.push(`设备：${a.asset_code} · ${a.name}\n类型/厂商/型号：${a.asset_type||'-'} / ${a.vendor||'-'} / ${a.model||'-'}\n序列号/固件：${a.serial_no||'-'} / ${a.firmware||'-'}\n位置/关键度：${a.location||'-'} / ${a.criticality||'-'}`);
+  if($("alarmCode").value.trim())lines.push(`报警码：${$("alarmCode").value.trim()}`);
+  if($("operatingContext").value.trim())lines.push(`运行工况：${$("operatingContext").value.trim()}`);
+  try{measurements=collectMeasurements();if(Object.keys(measurements).length)lines.push(`现场测点：\n${JSON.stringify(measurements,null,2)}`);}catch(e){measurementError=e.message;lines.push(`现场测点：${e.message}`);}
+  if($("maintenanceHistory").value.trim())lines.push(`近期维修：${$("maintenanceHistory").value.trim()}`);
+  $("contextPreview").textContent=lines.join("\n\n")||"未选择设备，未填写结构化现场信息。";
+  const researchLabels={off:"关闭",basic:"基础",supervisory:"主管"},chips=[];
+  chips.push(`<span class="context-chip ${a?'':'muted'}" title="${esc(a?`${a.asset_code} · ${a.name}`:'未指定设备')}">${esc(a?`${a.asset_code} · ${a.name}`:'未指定设备')}</span>`);
+  if($("alarmCode").value.trim())chips.push(`<span class="context-chip" title="报警码">报警 ${esc($("alarmCode").value.trim())}</span>`);
+  const count=Object.keys(measurements).length;if(count)chips.push(`<span class="context-chip">${count} 个测点</span>`);
+  chips.push(`<span class="context-chip ${measurementError?'':'muted'}" title="${esc(measurementError||'外部研究模式')}">${measurementError?'测点格式有误':`外部研究：${researchLabels[$("researchMode").value]||$("researchMode").value}`}</span>`);
+  $("diagnosisSummary").innerHTML=chips.join("");
+}
+async function loadAssets(){try{const d=await apiJson("/api/assets"),s=$("assetId"),selected=s.value;state.assets=d.assets||[];s.innerHTML='<option value="">未指定设备</option>'+state.assets.map(a=>`<option value="${esc(a.id)}">${esc(a.asset_code)} · ${esc(a.name)} · ${esc(a.model)}</option>`).join('');s.value=selected;updateContextPreview();}catch(e){log("error","[assets]",e.message)}}
+async function openAssets(){
+  const d=await apiJson("/api/assets?include_inactive=true");
+  const createHtml=can("operator")?`<section class="section-card"><h3>新增设备</h3><p class="section-copy">建立统一设备档案，后续诊断会自动关联适用 SOP、历史任务和测点趋势。</p><div class="manage-grid cols-3"><label class="form-field"><span>设备编号 *</span><input id="aCode" placeholder="例如 CHEM-P-2025-004"></label><label class="form-field"><span>设备名称 *</span><input id="aName" placeholder="例如 原料输送泵"></label><label class="form-field"><span>设备类型</span><input id="aType" placeholder="例如 pump"></label><label class="form-field"><span>厂商</span><input id="aVendor" placeholder="设备制造商"></label><label class="form-field"><span>型号</span><input id="aModel" placeholder="设备型号"></label><label class="form-field"><span>序列号</span><input id="aSerial" placeholder="设备序列号"></label><label class="form-field"><span>固件版本</span><input id="aFirmware" placeholder="例如 2.4.1"></label><label class="form-field"><span>安装位置</span><input id="aLocation" placeholder="车间 / 工段 / 区域"></label><label class="form-field"><span>上级设备</span><select id="aParent"><option value="">无上级设备</option>${d.assets.filter(a=>a.status==='active').map(a=>`<option value="${esc(a.id)}">${esc(a.asset_code)} · ${esc(a.name)}</option>`).join('')}</select></label><label class="form-field"><span>关键度</span><select id="aCritical"><option value="medium">中等</option><option value="high">高</option><option value="critical">关键</option><option value="low">低</option></select></label><label class="form-field full"><span>扩展信息与测点模板（JSON）</span><textarea id="aMetadata" rows="3" placeholder='{"measurement_template":{"轴承温度":{"unit":"℃","normal_max":80}}}'></textarea></label></div><div class="actions"><button class="btn primary" id="aCreate">保存设备</button></div></section><details class="manage-card"><summary>从 CMMS / EAM / ERP 批量导入</summary><p class="form-hint">按设备编号幂等新增或更新，适合从现有资产系统迁移。</p><div class="manage-grid"><label class="form-field"><span>来源系统</span><input id="aImportSource" value="external" placeholder="例如 SAP-PM"></label><label class="form-field full"><span>设备 JSON 数组</span><textarea id="aImportJson" rows="7" placeholder='[{"asset_code":"P-101","name":"一号泵","asset_type":"pump"}]'></textarea></label></div><div class="actions"><button class="btn primary" id="aImport">开始导入</button></div></details>`:"";
+  const rows=d.assets.map(a=>`<tr><td><strong>${esc(a.asset_code)}</strong></td><td>${esc(a.name)}</td><td>${esc(a.asset_type||'—')}<br><small>${esc(a.model||'未填写型号')}</small></td><td>${esc(a.firmware||'—')}<br><small>${esc(a.location||'未填写位置')}</small></td><td><span class="status-pill">${esc(a.criticality)}</span></td><td><span class="status-pill" title="${esc(a.status)}">${esc(a.status)}</span><br><button class="btn" data-assetdetail="${esc(a.id)}">详情与履历</button>${can("operator")?`<button class="btn" data-assetstatus="${esc(a.id)}" data-nextstatus="${a.status==='active'?'inactive':'active'}">${a.status==='active'?'停用':'启用'}</button>`:''}</td></tr>`).join('');
+  openManage("设备资产",`${createHtml}<div class="manage-toolbar"><h3 class="section-heading">设备清单 <small>· ${d.assets.length} 台</small></h3></div><div class="table-shell"><table class="manage-table"><thead><tr><th>编号</th><th>名称</th><th>类型 / 型号</th><th>固件 / 位置</th><th>关键度</th><th>状态 / 操作</th></tr></thead><tbody>${rows||'<tr><td colspan="6"><div class="empty-state">暂无设备资产</div></td></tr>'}</tbody></table></div>`);
+  if($("aCreate"))$("aCreate").onclick=async()=>{let metadata={};if($("aMetadata").value.trim()){try{metadata=JSON.parse($("aMetadata").value)}catch{return alert("扩展信息 JSON 格式不正确")}}try{await apiJson("/api/assets",{method:"POST",body:JSON.stringify({asset_code:$("aCode").value.trim(),name:$("aName").value.trim(),asset_type:$("aType").value.trim(),vendor:$("aVendor").value.trim(),model:$("aModel").value.trim(),serial_no:$("aSerial").value.trim(),firmware:$("aFirmware").value.trim(),location:$("aLocation").value.trim(),parent_id:$("aParent").value,metadata,criticality:$("aCritical").value})});await loadAssets();await openAssets();}catch(e){alert(e.message)}};
+  if($("aImport"))$("aImport").onclick=async()=>{let assets;try{assets=JSON.parse($("aImportJson").value)}catch{return alert("设备 JSON 格式不正确")}if(!Array.isArray(assets))return alert("导入内容必须是 JSON 数组");try{const x=await apiJson("/api/assets/import",{method:"POST",body:JSON.stringify({source:$("aImportSource").value.trim()||"external",assets})});alert(`新增 ${x.created.length}，更新 ${x.updated.length}，失败 ${x.errors.length}`);await loadAssets();await openAssets()}catch(e){alert(e.message)}};
+  $("manageBody").querySelectorAll("[data-assetstatus]").forEach(b=>b.onclick=async()=>{try{await apiJson(`/api/assets/${b.dataset.assetstatus}`,{method:"PATCH",body:JSON.stringify({status:b.dataset.nextstatus})});await loadAssets();await openAssets();}catch(e){alert(e.message)}});
+  $("manageBody").querySelectorAll("[data-assetdetail]").forEach(b=>b.onclick=()=>openAssetDetail(b.dataset.assetdetail).catch(e=>alert(e.message)));
+}
+async function openAssetDetail(id){const d=await apiJson(`/api/assets/${id}/detail`),a=d.asset,m=d.metrics||{};openManage(`设备详情 · ${a.asset_code}`,`<div class="manage-card"><p><strong>${esc(a.name)}</strong>　${esc(a.status)}　关键度 ${esc(a.criticality)}</p><p>类型/厂商/型号：${esc(a.asset_type)} / ${esc(a.vendor)} / ${esc(a.model)}</p><p>序列号/固件：${esc(a.serial_no)} / ${esc(a.firmware)}　位置：${esc(a.location)}</p><details><summary>扩展信息与测点模板</summary><pre>${esc(JSON.stringify(a.metadata||{},null,2))}</pre></details><div class="actions"><button class="btn" id="assetBack">返回设备列表</button></div></div><div class="manage-grid"><div class="manage-card"><strong>诊断任务</strong><h2>${esc(m.jobs||0)}</h2></div><div class="manage-card"><strong>审计通过率</strong><h2>${esc((Number(m.audit_pass_rate||0)*100).toFixed(1))}%</h2></div></div><h3>测点趋势</h3><table class="manage-table"><thead><tr><th>测点</th><th>样本</th><th>最小/最大</th><th>平均值</th><th>最近时间</th></tr></thead><tbody>${(d.measurement_trends||[]).map(x=>`<tr><td>${esc(x.name)} (${esc(x.unit)})</td><td>${esc(x.samples)}</td><td>${esc(x.minimum)} / ${esc(x.maximum)}</td><td>${esc(Number(x.average||0).toFixed(3))}</td><td>${esc(x.latest_at)}</td></tr>`).join('')}</tbody></table><h3>诊断履历</h3><table class="manage-table"><thead><tr><th>状态</th><th>故障/报警</th><th>时间</th><th>操作</th></tr></thead><tbody>${(d.jobs||[]).map(j=>`<tr><td>${esc(jobStatusLabel(j.status))}</td><td>${esc(j.fault_input)}<br>${esc(j.alarm_code)}</td><td>${esc(j.updated_at)}</td><td><button class="btn" data-assetjob="${esc(j.session_id)}">任务详情</button></td></tr>`).join('')}</tbody></table><h3>已确认维修案例</h3><table class="manage-table"><thead><tr><th>故障</th><th>确认根因</th><th>处理方案/结果</th></tr></thead><tbody>${(d.cases||[]).map(c=>`<tr><td>${esc(c.fault_description)}</td><td>${esc(c.confirmed_root_cause||'未确认')}</td><td>${esc(c.resolution||'未回填')} / ${esc(c.outcome)}</td></tr>`).join('')}</tbody></table>`);$("assetBack").onclick=()=>openAssets().catch(e=>alert(e.message));$("manageBody").querySelectorAll("[data-assetjob]").forEach(b=>b.onclick=()=>openTaskDetail(b.dataset.assetjob));}
+async function openKnowledge(){
+  const d=await apiJson("/api/knowledge/documents");
+  const vh=d.vector_index||{},bi=d.builtin_index||{},vectorText=!vh.enabled?"受控 SOP Milvus 联动已禁用":vh.last_error?`受控 SOP Milvus 异常：${vh.last_error}`:`受控 SOP：${vh.collection||'managed_sop_knowledge'}；内置 SOP：${bi.collection||'industrial_fault_knowledge'}（${bi.exists?`${bi.entities} 条`:'未初始化'}）`;
+  const uploadHtml=can("expert")?`<details class="manage-card"><summary>上传或更新受控文档</summary><p class="form-hint">保存原文件与版本记录，并把当前有效分块增量同步到 Milvus。</p><div class="manage-grid cols-3"><label class="form-field"><span>文档标题 *</span><input id="kTitle" placeholder="清晰、可检索的 SOP 名称"></label><label class="form-field"><span>选择文件 *</span><input id="kFile" type="file" accept=".txt,.md,.csv,.tsv,.json,.pdf,.docx,.xlsx,.xlsm"></label><label class="form-field"><span>最低访问角色</span><select id="kRole"><option value="viewer">所有用户</option><option value="operator">操作员以上</option><option value="expert">专家以上</option></select></label><label class="form-field"><span>更新已有文档</span><input id="kDocId" placeholder="新文档可留空"></label><label class="form-field"><span>版本变更说明</span><input id="kSummary" placeholder="说明本次修订内容"></label><label class="form-field"><span>适用设备类型</span><input id="kAssetType" placeholder="例如 pump；支持 *"></label><label class="form-field"><span>适用厂商</span><input id="kVendor" placeholder="多个厂商用逗号分隔"></label><label class="form-field"><span>适用型号</span><input id="kModel" placeholder="例如 IH125-*"></label><label class="form-field"><span>适用固件</span><input id="kFirmware" placeholder="例如 2.*"></label><label class="form-field"><span>生效日期</span><input id="kValidFrom" type="date"></label><label class="form-field"><span>失效日期</span><input id="kValidTo" type="date"></label></div><div class="actions"><button class="btn primary" id="kUpload">保存并同步 Milvus</button></div></details>`:"";
+  const rows=d.documents.map(x=>`<tr><td><strong>${esc(x.title)}</strong></td><td>${esc(x.source_filename)}</td><td><strong>v${esc(x.current_version)}</strong><br><small>${esc(Object.entries(x.applicability||{}).map(([k,v])=>`${k}=${v}`).join('；')||'全部设备')}</small></td><td><span class="status-pill">${esc(x.min_role)}</span></td><td><span class="status-pill" title="${x.index_status==='ready'?'completed':x.index_status}">${esc(indexStatusLabel(x.index_status))}</span><br><small>${esc(x.status)}${x.index_error?` · ${esc(String(x.index_error).slice(0,80))}`:''}</small></td><td><code>${esc(x.id)}</code><br><button class="btn" data-kversions="${esc(x.id)}" data-ktitle="${esc(x.title)}">查看版本</button>${can("expert")?`<button class="btn" data-kreindex="${esc(x.id)}">重新同步</button><button class="btn" data-kstatus="${esc(x.id)}" data-nextstatus="${x.status==='active'?'inactive':'active'}">${x.status==='active'?'停用':'启用'}</button><button class="btn" data-kstatus="${esc(x.id)}" data-nextstatus="archived">归档</button>`:''}</td></tr>`).join('');
+  openManage("受控 SOP 文档库",`<section class="section-card subtle"><h3>知识检索状态</h3><p class="section-copy">${esc(vectorText)}</p><div class="manage-grid"><label class="form-field"><span>检索测试</span><input id="kTestQuery" placeholder="输入故障现象或关键词"></label><div class="form-field"><span>按当前诊断设备过滤适用范围</span><button class="btn" id="kTestSearch">测试知识召回</button></div></div><pre id="kTestResult" class="hidden"></pre></section>${uploadHtml}<div class="manage-toolbar"><h3 class="section-heading">受控文档 <small>· ${d.documents.length} 份</small></h3></div><div class="table-shell"><table class="manage-table"><thead><tr><th>标题</th><th>源文件</th><th>版本 / 适用范围</th><th>权限</th><th>文档 / 向量状态</th><th>ID / 操作</th></tr></thead><tbody>${rows||'<tr><td colspan="6"><div class="empty-state">尚未上传受控 SOP 文档</div></td></tr>'}</tbody></table></div>`);
+  if($("kUpload"))$("kUpload").onclick=async()=>{const f=$("kFile").files[0];if(!f)return alert("请选择文件");const applicability={};for(const [key,id] of [["asset_type","kAssetType"],["vendor","kVendor"],["model","kModel"],["firmware","kFirmware"],["valid_from","kValidFrom"],["valid_to","kValidTo"]]){const v=$(id).value.trim();if(v)applicability[key]=v}const q=new URLSearchParams({title:$("kTitle").value.trim()||f.name,filename:f.name,min_role:$("kRole").value,document_id:$("kDocId").value.trim(),change_summary:$("kSummary").value.trim(),applicability_json:JSON.stringify(applicability)});try{const r=await fetch(`/api/knowledge/documents?${q}`,{method:"POST",headers:apiHeaders(),body:await f.arrayBuffer()}),d=await r.json();if(!r.ok)throw new Error(typeof d.detail==="string"?d.detail:JSON.stringify(d.detail));const idx=d.vector_index||{};alert(`文档已保存：v${d.version}，${d.chunks} 个分块\nMilvus：${indexStatusLabel(idx.status)}${idx.error?`\n${idx.error}`:''}`);await openKnowledge();}catch(e){alert(e.message)}};
+  $("kTestSearch").onclick=async()=>{const q=$("kTestQuery").value.trim();if(!q)return alert("请输入测试关键词");try{const asset=$("assetId").value,x=await apiJson(`/api/knowledge/search?q=${encodeURIComponent(q)}&limit=5&asset_id=${encodeURIComponent(asset)}`);$("kTestResult").classList.remove("hidden");$("kTestResult").textContent=[`检索后端：${x.backend}`,x.warning?`提示：${x.warning}`:null].filter(Boolean).join("\n")+"\n\n"+(x.results||[]).map((r,i)=>`${i+1}. ${r.title} · ${r.location} · score=${r.score}\n${r.content}`).join("\n\n");}catch(e){alert(e.message)}};
+  $("manageBody").querySelectorAll("[data-kstatus]").forEach(b=>b.onclick=async()=>{try{await apiJson(`/api/knowledge/documents/${b.dataset.kstatus}/status`,{method:"PATCH",body:JSON.stringify({status:b.dataset.nextstatus})});await openKnowledge();}catch(e){alert(e.message)}});
+  $("manageBody").querySelectorAll("[data-kreindex]").forEach(b=>b.onclick=async()=>{try{const x=await apiJson(`/api/knowledge/documents/${b.dataset.kreindex}/reindex`,{method:"POST"});if(x.vector_index?.error)alert(x.vector_index.error);await openKnowledge();}catch(e){alert(e.message)}});
+  $("manageBody").querySelectorAll("[data-kversions]").forEach(b=>b.onclick=()=>openKnowledgeVersions(b.dataset.kversions,b.dataset.ktitle).catch(e=>alert(e.message)));
+}
+async function openKnowledgeVersions(id,title){const d=await apiJson(`/api/knowledge/documents/${id}/versions`);openManage(`知识版本 · ${title}`,`<div class="actions"><button class="btn" id="kBack">返回知识库</button></div><table class="manage-table"><thead><tr><th>版本</th><th>文档/向量状态</th><th>创建人</th><th>时间</th><th>变更说明</th><th>校验和/原文件</th></tr></thead><tbody>${d.versions.map(v=>`<tr><td>v${esc(v.version)}</td><td>${esc(v.status)} / ${esc(indexStatusLabel(v.index_status))}${v.index_error?`<br><small>${esc(v.index_error)}</small>`:''}</td><td>${esc(v.created_by)}</td><td>${esc(v.created_at)}</td><td>${esc(v.change_summary)}</td><td><code>${esc(String(v.checksum).slice(0,12))}</code>${v.source_path?`<br><button class="btn" data-ksource="${esc(v.id)}">下载原文件</button>`:'<br><small>旧数据无原文件</small>'}</td></tr>`).join('')}</tbody></table>`);$("kBack").onclick=()=>openKnowledge().catch(e=>alert(e.message));$("manageBody").querySelectorAll("[data-ksource]").forEach(b=>b.onclick=()=>downloadBinary(`/api/knowledge/documents/${id}/versions/${b.dataset.ksource}/source`).catch(e=>alert(e.message)));}
+async function openTaskCenter(page=state.taskPage){
+  state.taskPage=Math.max(0,page);const f=state.taskFilters,limit=25,params=new URLSearchParams({limit:String(limit),offset:String(state.taskPage*limit),q:f.q,status:f.status,asset_id:f.asset}),d=await apiJson(`/api/jobs?${params}`),pages=Math.max(1,Math.ceil((d.total||0)/limit));if(state.taskPage>=pages){state.taskPage=pages-1;return openTaskCenter(state.taskPage)}
+  const operator=can("operator"),rows=d.jobs.map(j=>{const archivable=operator&&!['queued','running','waiting_feedback','waiting_safety','cancel_requested','archived'].includes(j.status);return `<tr>${operator?`<td>${archivable?`<input type="checkbox" data-taskcheck="${esc(j.session_id)}">`:''}</td>`:''}<td><span class="status-pill" title="${esc(j.status)}">${esc(jobStatusLabel(j.status))}</span><br><small>${esc(PENDING_KIND_LABELS[j.pending_kind]||j.error_code||'')}</small></td><td><strong>${esc(j.asset_code||'未指定')}</strong><br><small>${esc(j.asset_name||'')} ${esc(j.alarm_code||'')}</small></td><td>${esc(j.fault_input)}<br><small>${esc(j.session_id)}</small></td><td>${esc(j.owner_id)}<br><small>${esc(j.updated_at)}</small></td><td><button class="btn" data-job="${esc(j.session_id)}">查看详情</button>${operator&&['failed','cancelled','interrupted','expired','denied'].includes(j.status)?`<button class="btn" data-retry="${esc(j.session_id)}">重试</button>`:''}</td></tr>`}).join('');
+  openManage("诊断任务中心",`<section class="section-card compact"><div class="manage-grid cols-3"><label class="form-field"><span>关键词</span><input id="taskQ" placeholder="故障、任务 ID 或报警码" value="${esc(f.q)}"></label><label class="form-field"><span>任务状态</span><select id="taskStatus"><option value="">全部状态</option>${Object.entries(JOB_STATUS_LABELS).map(([k,v])=>`<option value="${k}" ${f.status===k?'selected':''}>${v}</option>`).join('')}</select></label><label class="form-field"><span>关联设备</span><select id="taskAsset"><option value="">全部设备</option>${state.assets.map(a=>`<option value="${esc(a.id)}" ${f.asset===a.id?'selected':''}>${esc(a.asset_code)} · ${esc(a.name)}</option>`).join('')}</select></label></div><div class="manage-toolbar" style="margin-top:14px"><div class="actions">${operator?'<button class="btn" id="saveDraft">保存当前输入为草稿</button><button class="btn" id="archiveSelected">归档选中任务</button>':''}</div><button class="btn primary" id="taskFilter">应用筛选</button></div></section><div class="manage-toolbar"><h3 class="section-heading">任务列表 <small>· ${d.total||0} 条</small></h3></div><div class="table-shell"><table class="manage-table"><thead><tr>${operator?'<th><input id="taskSelectAll" type="checkbox" aria-label="全选"></th>':''}<th>状态 / 当前步骤</th><th>设备 / 报警</th><th>故障描述</th><th>负责人 / 更新时间</th><th>操作</th></tr></thead><tbody>${rows||`<tr><td colspan="${operator?6:5}"><div class="empty-state">没有符合条件的诊断任务</div></td></tr>`}</tbody></table></div><div class="pagination"><button class="btn" id="taskPrev" ${state.taskPage<=0?'disabled':''}>上一页</button><span>第 ${state.taskPage+1} / ${pages} 页</span><button class="btn" id="taskNext" ${state.taskPage>=pages-1?'disabled':''}>下一页</button></div>`);
+  $("taskFilter").onclick=()=>{state.taskFilters={q:$("taskQ").value.trim(),status:$("taskStatus").value,asset:$("taskAsset").value};openTaskCenter(0).catch(e=>alert(e.message))};$("taskPrev").onclick=()=>openTaskCenter(state.taskPage-1).catch(e=>alert(e.message));$("taskNext").onclick=()=>openTaskCenter(state.taskPage+1).catch(e=>alert(e.message));if($("taskSelectAll"))$("taskSelectAll").onchange=e=>$("manageBody").querySelectorAll("[data-taskcheck]").forEach(x=>x.checked=e.target.checked);
+  if($("archiveSelected"))$("archiveSelected").onclick=async()=>{const ids=[...$("manageBody").querySelectorAll("[data-taskcheck]:checked")].map(x=>x.dataset.taskcheck);if(!ids.length)return alert("请先选择可归档任务");try{const x=await apiJson("/api/jobs/archive-batch",{method:"POST",body:JSON.stringify({session_ids:ids})});if(x.skipped?.length)alert(`已归档 ${x.archived.length} 条，跳过 ${x.skipped.length} 条`);await openTaskCenter()}catch(e){alert(e.message)}};
+  if($("saveDraft"))$("saveDraft").onclick=async()=>{const fault=$("faultInput").value.trim();if(!fault)return alert("请先填写故障描述");let measurements={};try{measurements=collectMeasurements()}catch{return alert("测点 JSON 格式不正确")}try{await apiJson("/api/jobs/draft",{method:"POST",body:JSON.stringify({fault_input:fault,research_mode:$("researchMode").value,asset_id:$("assetId").value,alarm_code:$("alarmCode").value,operating_context:$("operatingContext").value,measurements,maintenance_history:$("maintenanceHistory").value.trim()})});await openTaskCenter(0)}catch(e){alert(e.message)}};
+  $("manageBody").querySelectorAll("[data-job]").forEach(b=>b.onclick=()=>openTaskDetail(b.dataset.job));
+  $("manageBody").querySelectorAll("[data-retry]").forEach(b=>b.onclick=async()=>{closeManage();const progress=addMsg("assistant","<p>正在重试诊断任务...</p>");setRunning(true);await runDiagnosisStream(`/api/jobs/${b.dataset.retry}/retry`,{},progress,{queued:o=>{state.jobId=o.session_id;progress.innerHTML=`<p>重试任务 ${esc(o.session_id)} 已进入队列。</p>`},progress:o=>{log(o.node,o.label,o.message);progress.innerHTML=`<p>${esc(o.message||"重试运行中...")}</p>`},error:o=>{progress.innerHTML=`<p style="color:var(--danger)">${esc(o.message||"重试失败")}</p>`}});});
+}
+async function openTaskDetail(id){
+  const d=await apiJson(`/api/jobs/${id}`),j=d.job;
+  const cancellable=['queued','running','waiting_feedback','waiting_safety'].includes(j.status);
+  const pending=d.pending||{},resumeHtml=j.status==='waiting_feedback'?`<div class="manage-card"><h3>继续专家反馈</h3><p>${esc(pending.question||'请提供专家反馈')}</p><textarea id="taskResumeFeedback" rows="5" placeholder="输入反馈；留空表示跳过"></textarea><button class="btn primary" id="taskResume">提交并继续诊断</button></div>`:j.status==='waiting_safety'?`<div class="manage-card"><h3>安全审批</h3><p>${esc(pending.message||'请确认安全措施')}</p><ul>${(pending.controls||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><textarea id="taskResumeFeedback" rows="4" placeholder="审批意见"></textarea><div class="actions"><button class="btn primary" id="taskApprove">批准并继续</button><button class="btn" id="taskDeny">拒绝并停止</button></div></div>`:'';
+  openManage(`任务 ${id}`,`<div class="manage-card"><p><span class="status-pill" title="${esc(j.status)}">${esc(jobStatusLabel(j.status))}</span> ${esc(j.fault_input)}</p>${j.status==='pending_approval'?'<p><strong>下一步：打开“流程版本”，批准最新版后再发布。</strong></p>':''}<p>设备：${esc(d.asset?`${d.asset.asset_code} · ${d.asset.name}`:'未指定')}　报警：${esc(j.alarm_code||'无')}　负责人：${esc(j.owner_id)}　租户：${esc(j.tenant_id)}</p><div class="actions">${j.status==='draft'?'<button class="btn primary" id="taskStart">启动草稿</button>':''}${cancellable?'<button class="btn" id="taskCancel">取消任务</button>':''}<button class="btn" id="taskProcedures">流程版本</button><button class="btn" id="taskWord">Word</button><button class="btn" id="taskPdf">PDF</button><button class="btn" id="taskChecklist">检查单</button>${!cancellable&&j.status!=='archived'?'<button class="btn" id="taskArchive">归档</button>':''}</div></div>${resumeHtml}<h3>案例结果</h3><pre>${esc(JSON.stringify(d.case||{},null,2))}</pre><h3>审计事件</h3><pre>${esc(JSON.stringify(d.events||[],null,2))}</pre>`);
+  if($("taskStart"))$("taskStart").onclick=async()=>{closeManage();const progress=addMsg("assistant","<p>正在启动草稿任务...</p>");setRunning(true);await runDiagnosisStream(`/api/jobs/${id}/start`,{},progress,{queued:o=>{state.jobId=o.session_id;progress.innerHTML=`<p>草稿已启动，新任务 ${esc(o.session_id)} 已进入队列。</p>`},progress:o=>{log(o.node,o.label,o.message);progress.innerHTML=`<p>${esc(o.message||"任务运行中...")}</p>`},error:o=>{progress.innerHTML=`<p style="color:var(--danger)">${esc(o.message||"启动失败")}</p>`}});};
+  if($("taskCancel"))$("taskCancel").onclick=async()=>{try{await apiJson(`/api/jobs/${id}/cancel`,{method:"POST"});await openTaskCenter();}catch(e){alert(e.message)}};
+  if($("taskResume"))$("taskResume").onclick=()=>resumeTaskFromCenter(id,null).catch(e=>alert(e.message));
+  if($("taskApprove"))$("taskApprove").onclick=()=>resumeTaskFromCenter(id,true).catch(e=>alert(e.message));
+  if($("taskDeny"))$("taskDeny").onclick=()=>resumeTaskFromCenter(id,false).catch(e=>alert(e.message));
+  $("taskProcedures").onclick=()=>openProcedureEditor(id,(d.procedures||[])[0]?.mermaid||"");
+  $("taskWord").onclick=()=>downloadBinary(`/api/jobs/${id}/export?format=docx`).catch(e=>alert(e.message));
+  $("taskPdf").onclick=()=>downloadBinary(`/api/jobs/${id}/export?format=pdf`).catch(e=>alert(e.message));
+  $("taskChecklist").onclick=()=>downloadBinary(`/api/jobs/${id}/export?format=checklist`).catch(e=>alert(e.message));
+  if($("taskArchive"))$("taskArchive").onclick=async()=>{try{await apiJson(`/api/jobs/${id}/archive`,{method:"POST"});await openTaskCenter();}catch(e){alert(e.message)}};
+}
+async function resumeTaskFromCenter(id,approved){const feedback=$("taskResumeFeedback")?.value.trim()||"";closeManage();showFeedbackComposer();state.sessionId=id;const progress=addMsg("assistant",`<p>正在恢复任务 ${esc(id)}...</p>`);setRunning(true);await runDiagnosisStream("/api/resume",{session_id:id,feedback,approved},progress,{progress:o=>{log(o.node,o.label,o.message);progress.innerHTML=`<p>${esc(o.message||'任务继续运行中...')}</p>`},error:o=>{showDiagnosisComposer();progress.innerHTML=`<p style="color:var(--danger)">${esc(o.message||'恢复失败')}</p>`}});}
+async function openProcedureEditor(id,diagram){
+  const d=await apiJson(`/api/procedures/${id}/versions`),versions=d.versions||[],latest=versions[0];
+  openManage(`流程编辑与审批 · ${id}`,`<div class="manage-grid"><div><textarea class="editor-text" id="procedureSource" rows="22">${esc(diagram||latest?.mermaid||"")}</textarea><input id="procedureSummary" placeholder="版本变更说明"><div class="actions"><button class="btn primary" id="procedureSave">保存新版本</button>${latest?'<button class="btn" id="procedureApprove">批准最新版</button><button class="btn" id="procedureReject">拒绝最新版</button><button class="btn" id="procedurePublish">发布最新版</button>':''}</div></div><div class="diagram" id="procedurePreview"></div></div><h3>版本历史</h3><table class="manage-table"><thead><tr><th>版本</th><th>状态</th><th>作者/审批人</th><th>说明</th></tr></thead><tbody>${versions.map(v=>`<tr><td>v${v.version}</td><td>${esc(v.status)}</td><td>${esc(v.author_id)} / ${esc(v.approver_id)}</td><td>${esc(v.change_summary)}</td></tr>`).join('')}</tbody></table><div id="procedureDiff"></div>`);
+  const render=()=>renderMermaidInto($("procedurePreview"),$("procedureSource").value);await render();let renderTimer=null;$("procedureSource").oninput=()=>{clearTimeout(renderTimer);renderTimer=setTimeout(render,400);};
+  $("procedureSave").onclick=async()=>{try{await apiJson(`/api/procedures/${id}/versions`,{method:"POST",body:JSON.stringify({mermaid:$("procedureSource").value,change_summary:$("procedureSummary").value})});await openProcedureEditor(id,$("procedureSource").value);}catch(e){alert(e.message)}};
+  if(latest){$("procedureApprove").onclick=async()=>{try{await apiJson(`/api/procedures/${id}/versions/${latest.id}/approve`,{method:"POST",body:JSON.stringify({note:prompt("审批意见")||""})});await openProcedureEditor(id,$("procedureSource").value);}catch(e){alert(e.message)}};$("procedureReject").onclick=async()=>{try{await apiJson(`/api/procedures/${id}/versions/${latest.id}/reject`,{method:"POST",body:JSON.stringify({note:prompt("拒绝原因")||""})});await openProcedureEditor(id,$("procedureSource").value);}catch(e){alert(e.message)}};$("procedurePublish").onclick=async()=>{try{await apiJson(`/api/procedures/${id}/versions/${latest.id}/publish`,{method:"POST",body:JSON.stringify({note:prompt("发布说明")||""})});await openProcedureEditor(id,$("procedureSource").value);}catch(e){alert(e.message)}};}
+  if(versions.length>1){try{const left=versions[1],right=versions[0],x=await apiJson(`/api/procedures/${id}/diff?left=${left.id}&right=${right.id}`),h=x.hunks||[];$("procedureDiff").innerHTML=h.length?`<h3>从 v${left.version} 逐条采纳 v${right.version} 的差异</h3>${h.map(item=>`<label class="manage-card" style="display:block"><input type="checkbox" data-hunk="${item.id}" checked> <strong>${esc(item.operation)} · 原第 ${esc(item.left_start)} 行 / 新第 ${esc(item.right_start)} 行</strong><pre>- ${(item.before||[]).map(esc).join('\n- ')}\n+ ${(item.after||[]).map(esc).join('\n+ ')}</pre></label>`).join('')}<button class="btn primary" id="adoptHunks">按选择生成新版本</button>`:`<pre>${esc(x.diff||"两个版本没有差异")}</pre>`;if($("adoptHunks"))$("adoptHunks").onclick=async()=>{const accepted=[...$("procedureDiff").querySelectorAll("[data-hunk]:checked")].map(e=>Number(e.dataset.hunk));try{await apiJson(`/api/procedures/${id}/adopt`,{method:"POST",body:JSON.stringify({left_version_id:left.id,right_version_id:right.id,accepted_hunks:accepted,change_summary:`从 v${left.version} 逐条采纳 v${right.version} 差异`})});await openProcedureEditor(id,"");}catch(e){alert(e.message)}};}catch(e){$("procedureDiff").textContent=e.message}}
+}
+function openCaseConfirmation(id){openManage(`处理结果回填 · ${id}`,`<div class="manage-grid"><textarea id="caseCause" placeholder="确认根因*" rows="5"></textarea><textarea id="caseResolution" placeholder="实际处理方案*" rows="5"></textarea><select id="caseOutcome"><option value="resolved">已解决</option><option value="partially_resolved">部分解决</option><option value="unresolved">未解决</option></select><select id="caseRating"><option value="5">5 分</option><option value="4">4 分</option><option value="3">3 分</option><option value="2">2 分</option><option value="1">1 分</option></select><button class="btn primary" id="caseSave">确认并沉淀案例</button></div>`);$("caseSave").onclick=async()=>{try{await apiJson(`/api/cases/${id}/confirm`,{method:"POST",body:JSON.stringify({confirmed_root_cause:$("caseCause").value,resolution:$("caseResolution").value,outcome:$("caseOutcome").value,expert_rating:Number($("caseRating").value),credibility:.9})});alert("案例已确认，后续诊断可召回");closeManage();}catch(e){alert(e.message)}};}
+async function openDashboard(){const d=await apiJson("/api/dashboard/quality"),s=d.summary||{},assets=d.by_asset||[],models=d.by_model||[];const assetRows=assets.map(x=>`<tr><td><code>${esc(x.asset_id||'未关联设备')}</code></td><td>${esc(x.jobs||0)}</td><td>${esc((Number(x.audit_pass_rate||0)*100).toFixed(1))}%</td><td>${esc((Number(x.avg_elapsed_ms||0)/1000).toFixed(1))} 秒</td><td>${esc(Number(x.cost||0).toFixed(4))}</td></tr>`).join(''),modelRows=models.map(x=>`<tr><td>${esc(x.model||'未记录模型')}</td><td>${esc(x.jobs||0)}</td><td>${esc(x.tokens||0)}</td><td>${esc(Number(x.cost||0).toFixed(4))}</td></tr>`).join('');openManage("质量与成本看板",`<div class="metric-grid"><div class="metric-card accent"><div class="metric-label">诊断任务</div><div class="metric-value">${esc(s.jobs||0)}</div><div class="metric-note">当前租户累计任务</div></div><div class="metric-card"><div class="metric-label">审计通过率</div><div class="metric-value">${esc(((s.audit_pass_rate||0)*100).toFixed(1))}%</div><div class="metric-note">流程完整性与准确性</div></div><div class="metric-card"><div class="metric-label">专家修改率</div><div class="metric-value">${esc(((s.expert_modification_rate||0)*100).toFixed(1))}%</div><div class="metric-note">发生人工反馈或修订</div></div><div class="metric-card"><div class="metric-label">案例确认成功率</div><div class="metric-value">${esc(((s.case_success_rate||0)*100).toFixed(1))}%</div><div class="metric-note">已回填案例的解决比例</div></div><div class="metric-card"><div class="metric-label">平均诊断耗时</div><div class="metric-value">${esc(((s.avg_elapsed_ms||0)/1000).toFixed(1))}<small>s</small></div><div class="metric-note">从开始到流程输出</div></div><div class="metric-card"><div class="metric-label">平均修订次数</div><div class="metric-value">${esc(Number(s.avg_revisions||0).toFixed(2))}</div><div class="metric-note">每个诊断任务</div></div><div class="metric-card"><div class="metric-label">Token 用量</div><div class="metric-value">${esc(s.tokens||0)}</div><div class="metric-note">输入与输出合计</div></div><div class="metric-card"><div class="metric-label">估算模型成本</div><div class="metric-value">${esc(Number(s.cost||0).toFixed(4))}</div><div class="metric-note">依据环境变量中的模型单价</div></div></div><h3>按设备分析</h3><div class="table-shell"><table class="manage-table"><thead><tr><th>设备 ID</th><th>任务数</th><th>审计通过率</th><th>平均耗时</th><th>估算成本</th></tr></thead><tbody>${assetRows||'<tr><td colspan="5"><div class="empty-state">暂无设备维度统计数据</div></td></tr>'}</tbody></table></div><h3>按模型分析</h3><div class="table-shell"><table class="manage-table"><thead><tr><th>模型</th><th>任务数</th><th>Token</th><th>估算成本</th></tr></thead><tbody>${modelRows||'<tr><td colspan="4"><div class="empty-state">暂无模型维度统计数据</div></td></tr>'}</tbody></table></div>`);}
 document.querySelectorAll(".mode button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".mode button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); state.mode=b.dataset.mode;});
+$("researchMode").onchange=()=>{syncResearchFields();updateContextPreview();};
+[$("assetId"),$("alarmCode"),$("operatingContext"),$("measurements"),$("maintenanceHistory")].forEach(el=>{el.addEventListener("input",updateContextPreview);el.addEventListener("change",updateContextPreview);});
+$("addMeasurementBtn").onclick=()=>{const row=addMeasurementRow();row.querySelector("input").focus();updateContextPreview();};
+$("diagnosisSettingsBtn").onclick=openDiagnosisSettings;
+$("diagnosisSettingsDone").onclick=()=>{try{collectMeasurements();updateContextPreview();closeDiagnosisSettings(true)}catch(e){alert(e.message)}};
+$("diagnosisSettingsCancel").onclick=()=>closeDiagnosisSettings(false);
+$("diagnosisSettingsClose").onclick=()=>closeDiagnosisSettings(false);
+$("diagnosisSettingsDialog").addEventListener("cancel",e=>{e.preventDefault();closeDiagnosisSettings(false)});
+$("diagnosisSettingsDialog").addEventListener("click",e=>{if(e.target===$("diagnosisSettingsDialog"))closeDiagnosisSettings(false)});
 document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{$("faultInput").value=b.dataset.prompt; $("sendBtn").classList.add("ready"); $("faultInput").focus();});
 $("faultInput").oninput=()=>$("sendBtn").classList.toggle("ready",!!$("faultInput").value.trim());
 $("faultInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();start();}};
 $("feedbackInput").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();submitFeedback(false);}};
 $("sendBtn").onclick=start; $("clearBtn").onclick=clearLogs; $("submitBtn").onclick=()=>submitFeedback(false); $("skipBtn").onclick=()=>submitFeedback(true); $("newBtn").onclick=()=>location.reload();
+$("taskCenterBtn").onclick=()=>openTaskCenter().catch(e=>alert(e.message));
+$("assetCenterBtn").onclick=()=>openAssets().catch(e=>alert(e.message));
+$("knowledgeCenterBtn").onclick=()=>openKnowledge().catch(e=>alert(e.message));
+$("dashboardBtn").onclick=()=>openDashboard().catch(e=>alert(e.message));
+$("manageClose").onclick=closeManage;
+$("manageDialog").addEventListener("click",e=>{if(e.target===$("manageDialog"))closeManage();});
+$("reviewDiagramBtn").onclick=openReviewDiagram; $("diagramDialogClose").onclick=closeDiagramDialog; $("diagramDialogDone").onclick=closeDiagramDialog;
+$("copyReviewDiagram").onclick=async e=>{try{await navigator.clipboard.writeText(state.reviewDiagram); e.target.textContent="已复制"; setTimeout(()=>e.target.textContent="复制 Mermaid",1200)}catch(err){e.target.textContent="复制失败";}};
+$("diagramDialog").addEventListener("click",e=>{if(e.target===$("diagramDialog")) closeDiagramDialog();});
 $("searchInput").oninput=()=>{const q=$("searchInput").value.trim().toLowerCase(); document.querySelectorAll(".item").forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?"":"none");};
-loadHistory();
+$("loginDialog").addEventListener("cancel",e=>e.preventDefault());
+$("loginForm").onsubmit=async e=>{e.preventDefault();$("loginBtn").disabled=true;$("loginError").textContent="";try{const data=await apiJson("/api/auth/login",{method:"POST",body:JSON.stringify({username:$("loginUsername").value.trim(),password:$("loginPassword").value})});applyUser(data.user);$("loginPassword").value="";$("loginDialog").close();await Promise.all([loadHistory(),loadAssets()]);}catch(err){$("loginError").textContent=err.message}finally{$("loginBtn").disabled=false}};
+$("logoutBtn").onclick=async()=>{try{await apiJson("/api/auth/logout",{method:"POST"})}finally{location.reload()}};
+addMeasurementRow();syncResearchFields();updateContextPreview();
+initWaifu();
+localStorage.removeItem("pilotApiKey");
+loadCurrentUser().then(ok=>{if(ok){loadHistory();loadAssets();}});
 </script>
 </body>
 </html>

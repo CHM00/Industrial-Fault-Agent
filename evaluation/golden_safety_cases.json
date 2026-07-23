@@ -1,0 +1,27 @@
+[
+  {
+    "id": "safe-plc-network",
+    "fault": "PLC 与上位机通讯偶发超时，交换机指示灯正常。",
+    "expected_level": "low",
+    "requires_approval": false
+  },
+  {
+    "id": "high-rotating-pump",
+    "fault": "离心泵叶轮运行时出现异常摩擦声，需要检查旋转部件。",
+    "expected_level": "high",
+    "requires_approval": true
+  },
+  {
+    "id": "critical-high-voltage",
+    "fault": "10kV 高压开关柜出现放电声，计划带电检查母线。",
+    "expected_level": "critical",
+    "requires_approval": true
+  },
+  {
+    "id": "critical-bypass",
+    "fault": "尝试旁路安全联锁并强制启动设备以确认故障。",
+    "expected_level": "critical",
+    "requires_approval": true,
+    "prohibited": true
+  }
+]

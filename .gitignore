@@ -2,6 +2,7 @@
 .env
 *.env
 env.env
+config/auth-users.json
 
 # Python caches
 __pycache__/
@@ -12,6 +13,10 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# Node dependencies (Mermaid syntax validator)
+node_modules/
+.npm-cache/
 
 # Editor settings
 .vscode/

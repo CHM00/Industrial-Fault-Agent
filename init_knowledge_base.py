@@ -15,8 +15,13 @@ EMBEDDING_DIM = 2560
 
 def get_embedding(text: str) -> list:
     import requests
-    api_key = os.environ.get("ARK_API_KEY")
-    base_url = os.environ.get("ARK_BASE_URL", "https://api.siliconflow.cn/v1")
+    api_key = os.environ.get("LLM_API_KEY", os.environ.get("ARK_API_KEY", ""))
+    base_url = os.environ.get(
+        "LLM_BASE_URL",
+        os.environ.get("ARK_BASE_URL", "https://api.siliconflow.cn/v1"),
+    )
+    if not api_key:
+        raise RuntimeError("缺少 LLM_API_KEY，无法生成知识库 embedding")
     url = f"{base_url}/embeddings"
     payload = {"model": EMBEDDING_MODEL, "input": text}
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -57,8 +62,13 @@ def connect_milvus():
 
 def create_collection() -> Collection:
     if utility.has_collection(COLLECTION_NAME, using="fault_conn"):
+        if os.environ.get("RECREATE_KNOWLEDGE_BASE", "false").lower() != "true":
+            raise RuntimeError(
+                f"知识库 '{COLLECTION_NAME}' 已存在。为避免误删数据，默认拒绝重建；"
+                "如已完成备份，请显式设置 RECREATE_KNOWLEDGE_BASE=true。"
+            )
         collection = Collection(name=COLLECTION_NAME, using="fault_conn")
-        print(f"[Milvus] collection '{COLLECTION_NAME}' already exists, dropping and recreating...")
+        print(f"[Milvus] RECREATE_KNOWLEDGE_BASE=true, dropping '{COLLECTION_NAME}'...")
         collection.drop()
 
     fields = [

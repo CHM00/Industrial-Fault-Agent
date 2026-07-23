@@ -1,0 +1,16 @@
+{
+  "admin": {
+    "display_name": "系统管理员",
+    "password_hash": "运行 python security.py 生成后替换这里",
+    "subject": "admin-1",
+    "role": "admin",
+    "tenant_id": "factory-a"
+  },
+  "operator": {
+    "display_name": "诊断操作员",
+    "password_hash": "运行 python security.py 生成后替换这里",
+    "subject": "operator-1",
+    "role": "operator",
+    "tenant_id": "factory-a"
+  }
+}

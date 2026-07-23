@@ -3,10 +3,20 @@ services:
     build: .
     container_name: langgraph-agent
     ports:
-      - "8000:8000"
+      - "65530:8000"
     env_file:
       - .env
+    environment:
+      APP_ENV: production
+      CHECKPOINT_BACKEND: sqlite
+      CHECKPOINT_SQLITE_PATH: /app/output/runtime/checkpoints.sqlite3
+      PILOT_DB_PATH: /app/output/runtime/pilot.sqlite3
+      AUTH_ENABLED: "${AUTH_ENABLED:-true}"
+      PILOT_API_KEY: "${PILOT_API_KEY:-}"
+      MAX_CONCURRENT_DIAGNOSES: "${MAX_CONCURRENT_DIAGNOSES:-2}"
+      RATE_LIMIT_PER_MINUTE: "${RATE_LIMIT_PER_MINUTE:-60}"
+      SESSION_TTL_SECONDS: "${SESSION_TTL_SECONDS:-86400}"
+      LANGGRAPH_STRICT_MSGPACK: "true"
     volumes:
       - ./output:/app/output
     restart: unless-stopped
-

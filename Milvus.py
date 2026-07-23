@@ -40,8 +40,11 @@ class MilvusClass:
         self.MILVUS_PORT = os.environ.get("MILVUS_PORT", "19530")
         self.MILVUS_USER = os.environ.get("MILVUS_USER", "root")
         self.MILVUS_PASSWORD = os.environ.get("MILVUS_PASSWORD", "")
-        self.ARK_API_KEY = os.environ.get("ARK_API_KEY")  # 填入你的 API Key
-        self.ARK_BASE_URL = os.environ.get("ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
+        self.ARK_API_KEY = os.environ.get("LLM_API_KEY", os.environ.get("ARK_API_KEY", ""))
+        self.ARK_BASE_URL = os.environ.get(
+            "LLM_BASE_URL",
+            os.environ.get("ARK_BASE_URL", "https://api.siliconflow.cn/v1"),
+        )
         self.embedding_url = self.ARK_BASE_URL + "/embeddings"
         self.LLM_MODEL = "deepseek-ai/DeepSeek-V3"  # 你的推理模型 ID
         self.EMBEDDING_MODEL = "Qwen/Qwen3-Embedding-4B"  # 你的 Embedding 模型 ID

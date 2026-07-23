@@ -1,0 +1,12 @@
+{
+  "name": "industrial-fault-agent-mermaid-validator",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pinned Mermaid parser for the validation pipeline, plus the local Live2D assistant widget.",
+  "dependencies": {
+    "jsdom": "22.1.0",
+    "live2d-widget-model-shizuku": "^1.0.5",
+    "mermaid": "10.9.5",
+    "oh-my-live2d": "^0.19.3"
+  }
+}
